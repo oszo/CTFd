@@ -7,6 +7,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - SECRET_KEY=SECRET_KEY_TEST
       - UPLOAD_FOLDER=/var/uploads
       - DATABASE_URL=mysql+pymysql://root:ctfd@db/ctfd
       - REDIS_URL=redis://cache:6379

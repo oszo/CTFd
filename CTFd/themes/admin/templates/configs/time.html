@@ -16,6 +16,11 @@
 					Freeze Time
 				</a>
 			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="#attempt-limitation" aria-controls="attempt-limitation" role="tab" data-toggle="tab">
+					Attempt Limitation
+				</a>
+			</li>			
 		</ul>
 
 		<div class="tab-content">
@@ -238,6 +243,66 @@
 					</div>
 				</div>
 			</div>
+			<div role="tabpanel" class="tab-pane" id="attempt-limitation">
+				<div class="row" id="attempt-limitation">
+					<div class="col-md-12">
+						<p>Attempt limitation specifies the time that each user / team can try to send an answer.</p>
+						<sub class="text-right mb-3">* All time fields required</sub>
+					</div>
+					
+					<div class="frome-group col-md-6">
+						<div id="attempt_limit_type" style="">
+							<label for="form-control attempt-limitation">Limitation Type:</label>
+							<select class="form-control attempt-limitation" id="attempt_limit_type" name="attempt_limit_type">
+								<option value="team" {% if attempt_limit_type == 'team' %}selected{% endif %}>
+									Teams
+								</option>
+								<option value="user" {% if attempt_limit_type == 'user' %}selected{% endif %}>
+									Users
+								</option>
+							</select>
+						</div>
+						<br>
+						<div id="create-chal-entry-div">
+						</div>
+					</div>
+					<div class="frome-group col-md-6">
+					</div>				
+
+					<div class="form-group col-md-2">
+						<label for="attempt-limitation-hour">Hour:</label>
+						<input class="form-control attempt-limitation" id='attempt_limit_hour' 		
+							name='attempt_limit_hour' min="0" max="23" type='number'
+							value="{% print(attempt_limit_hour) %}">
+					</div>
+
+					<div class="form-group col-md-2">
+						<label for="attempt-limitation-minute">Minute:</label>
+						<input class="form-control attempt-limitation" id='attempt_limit_minute' 		
+							name='attempt_limit_minute' min="0" max="59" type='number'
+							value="{% print(attempt_limit_minute) %}">
+					</div>
+
+					<div class="form-group col-md-2">
+						<label for="attempt-limitation-second">Second:</label>
+						<input class="form-control attempt-limitation" id='attempt_limit_second' 
+							name='attempt_limit_second' min="0" max="59" type='number'
+							value="{% print(attempt_limit_second) %}">
+					</div>
+					<div class="frome-group col-md-6">
+					</div>
+
+					<div class="form-group col-md-4">
+						<label for="attempt-limitation-second">Attempt:</label>
+						<input class="form-control attempt-limitation" id='attempt_limit_count' 
+							name='attempt_limit_count' min="1" type='number'
+							value="{% print(attempt_limit_count) %}">
+					</div>
+					<div class="frome-group col-md-8">
+					</div>
+
+				</div>
+			</div>			
 		</div>
 
 		<button type="submit" class="btn btn-md btn-primary float-right">Update</button>

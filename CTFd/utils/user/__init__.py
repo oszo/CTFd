@@ -82,3 +82,18 @@ def get_wrong_submissions_per_minute(account_id):
         Fails.date >= one_min_ago
     ).all()
     return len(fails)
+
+def get_wrong_submissions_per_time(current_user, attemp_limit_type, hour, minute, second):
+    some_time_ago = datetime.datetime.utcnow() + datetime.timedelta(hours=-1*hour,minutes=-1*minute,seconds=-1*second)
+    if attemp_limit_type == "team":
+        fails = db.session.query(Fails).filter(
+            Fails.team_id == current_user.team_id,
+            Fails.date >= some_time_ago
+        ).all()
+    else:
+        fails = db.session.query(Fails).filter(
+            Fails.user_id == current_user.id,
+            Fails.date >= some_time_ago
+        ).all()
+    # return "account_id:" + str(account_id) + " hour:" + str(hour) + " minute:" + str(minute) + " second:" + str(second) + " some_time_ago:" + str(some_time_ago) + " fails:" + str(fails)
+    return len(fails)

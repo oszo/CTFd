@@ -80,3 +80,23 @@ def mailserver():
 def get_themes():
     dir = os.path.join(app.root_path, 'themes')
     return [name for name in os.listdir(dir) if os.path.isdir(os.path.join(dir, name)) and name != 'admin']
+
+
+def get_attempt_limit_hour():
+    return int(get_config("attempt_limit_hour",0))
+
+
+def get_attempt_limit_minute():
+    return int(get_config("attempt_limit_minute",0))
+
+
+def get_attempt_limit_second():
+    return int(get_config("attempt_limit_second",10))
+
+
+def get_attempt_limit_count():
+    return int(get_config("attempt_limit_count",10))
+
+
+def get_attempt_limit_type():
+    return get_config("attempt_limit_type","team")

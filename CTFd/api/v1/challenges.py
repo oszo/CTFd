@@ -370,7 +370,13 @@ class ChallengeAttempt(Resource):
         chal_class = get_chal_class(challenge.type)
 
         # Anti-bruteforce / submitting Flags too quickly
-        if current_user.get_wrong_submissions_per_minute(session['id']) > 10:
+        if current_user.get_wrong_submissions_per_time(
+            get_current_user(), 
+            config.get_attempt_limit_type(), 
+            config.get_attempt_limit_hour(), 
+            config.get_attempt_limit_minute(), 
+            config.get_attempt_limit_second()
+        ) > config.get_attempt_limit_count():
             if ctftime():
                 chal_class.fail(
                     user=user,
@@ -382,7 +388,13 @@ class ChallengeAttempt(Resource):
                 'submissions',
                 "[{date}] {name} submitted {submission} with kpm {kpm} [TOO FAST]",
                 submission=request_data['submission'].encode('utf-8'),
-                kpm=current_user.get_wrong_submissions_per_minute(session['id'])
+                kpm=current_user.get_wrong_submissions_per_time(
+                        get_current_user(), 
+                        config.get_attempt_limit_type(), 
+                        config.get_attempt_limit_hour(), 
+                        config.get_attempt_limit_minute(), 
+                        config.get_attempt_limit_second()
+                    )
             )
             # Submitting too fast
             return {
