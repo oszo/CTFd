@@ -5,6 +5,8 @@ RUN adduser -D -u 1001 -s /bin/bash ctfd
 
 WORKDIR /opt/CTFd
 RUN mkdir -p /opt/CTFd
+RUN mkdir -p /var/log/CTFd
+RUN mkdir -p /var/uploads
 
 COPY requirements.txt .
 
@@ -20,6 +22,8 @@ RUN for d in CTFd/plugins/*; do \
 
 RUN chmod +x /opt/CTFd/docker-entrypoint.sh
 RUN chown -R 1001:1001 /opt/CTFd
+RUN chown -R 1001:1001 /var/log/CTFd
+RUN chown -R 1001:1001 /var/uploads
 
 USER 1001
 EXPOSE 8000
