@@ -48,6 +48,8 @@ admin = Blueprint('admin', __name__)
 from CTFd.admin import challenges  # noqa: F401
 from CTFd.admin import pages  # noqa: F401
 from CTFd.admin import scoreboard  # noqa: F401
+from CTFd.admin import kim  # noqa: F401
+#from CTFd.admin import scoreboard2  # noqa: F401
 from CTFd.admin import statistics  # noqa: F401
 from CTFd.admin import teams  # noqa: F401
 from CTFd.admin import users  # noqa: F401
