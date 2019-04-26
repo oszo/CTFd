@@ -183,6 +183,8 @@ def create_app(config='CTFd.config.Config'):
         from CTFd.users import users
         from CTFd.challenges import challenges
         from CTFd.scoreboard import scoreboard
+	#from CTFd.scoreboard2 import scoreboard
+
         from CTFd.auth import auth
         from CTFd.admin import admin
         from CTFd.api import api
