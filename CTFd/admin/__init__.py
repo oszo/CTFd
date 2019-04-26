@@ -174,8 +174,11 @@ def reset():
         Submissions.query.delete()
         Awards.query.delete()
         Unlocks.query.delete()
-        Users.query.delete()
+        for team in Teams.query.all():
+            for member in team.members:
+                member.team_id = None
         Teams.query.delete()
+        Users.query.delete()
         set_config('setup', False)
         db.session.commit()
         cache.clear()

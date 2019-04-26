@@ -134,21 +134,24 @@ class TeamSchema(ma.ModelSchema):
     @pre_load
     def validate_captain_id(self, data):
         captain_id = data.get('captain_id')
-        if captain_id is None:
-            return
+        # if captain_id is None:
+        #     return
 
         if is_admin():
-            team_id = data.get('id')
-            if team_id:
-                target_team = Teams.query.filter_by(id=team_id).first()
-            else:
-                target_team = get_current_team()
-            captain = Users.query.filter_by(id=captain_id).first()
-            if captain in target_team.members:
-                return
-            else:
-                raise ValidationError('Invalid Captain ID', field_names=['captain_id'])
+            return
+            # team_id = data.get('id')
+            # if team_id:
+            #     target_team = Teams.query.filter_by(id=team_id).first()
+            # else:
+            #     target_team = get_current_team()
+            # captain = Users.query.filter_by(id=captain_id).first()
+            # if captain in target_team.members:
+            #     return
+            # else:
+            #     raise ValidationError('Invalid Captain ID', field_names=['captain_id'])
         else:
+            if captain_id is None:
+                return
             current_team = get_current_team()
             current_user = get_current_user()
             if current_team.captain_id == current_user.id:
