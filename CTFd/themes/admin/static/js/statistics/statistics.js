@@ -104,7 +104,7 @@ function category_breakdown_graph() {
 
         for (var category in res) {
             if (res.hasOwnProperty(category)) {
-                categories.push(category);
+                categories.push( (category.length > 20) ? category.substring(0,20)+"..." : category );
                 count.push(res[category]);
             }
         }
