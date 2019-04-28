@@ -69,7 +69,7 @@
 					{% if get_config('user_mode') == 'teams' %}
 					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.teams_listing') }}">Teams</a></li>
 					{% endif %}
-					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.scoreboard_listing') }}">Scoreboard</a></li>
+					<li class="nav-item" id="scoreboard-nav"><a class="nav-link" href="{{ url_for('admin.scoreboard_listing') }}">Scoreboard</a></li>
 					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.challenges_listing') }}">Challenges</a></li>
 					<li class="nav-item dropdown">
 						<a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button"
@@ -167,6 +167,25 @@
 			<script src="{{ script }}"></script>
 		{% endif %}
 	{% endfor %}
+	<script>
+		$( document ).ready(function() {
+			var original_sb_link = "{{ url_for('admin.scoreboard_listing') }}";
+			var sb_plugins = {{ scoreboard_plugins() | safe }}
+			if (sb_plugins.scoreboard_plugin_list.length > 0){
+				var new_scoreboard_nav = '<li class="nav-item dropdown" id="scoreboard-nav">';
+				new_scoreboard_nav += '	<a class="nav-link dropdown-toggle" href="#" id="navbar-scoreboard-dropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Scoreboard</a>';
+				new_scoreboard_nav += '	<div class="dropdown-menu" aria-labelledby="navbar-scoreboard-dropdown">';
+				new_scoreboard_nav += '		<a class="dropdown-item" href="' + original_sb_link + '">Graph Scoreboard</a>';
+				sb_plugins.scoreboard_plugin_list.forEach(sb_plugin => {
+					new_scoreboard_nav += '		<a class="dropdown-item" href="' + sb_plugin.Link + '">' + sb_plugin.Name + '</a>';
+				});
+				new_scoreboard_nav += '	</div>';
+				new_scoreboard_nav += '</li>';
+				$("#scoreboard-nav").replaceWith($(new_scoreboard_nav));
+				console.log(sb_plugins.scoreboard_plugin_list);
+			}
+		});
+	</script>	
 </body>
 
 </html>

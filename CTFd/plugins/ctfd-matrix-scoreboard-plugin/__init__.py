@@ -4,6 +4,7 @@ from CTFd.utils.plugins import override_template
 from CTFd.models import db, Teams, Solves, Awards, Challenges
 from sqlalchemy.sql import or_
 from CTFd.utils.decorators.visibility import check_account_visibility, check_score_visibility
+from CTFd.utils.decorators import admins_only
 from CTFd.utils.scores import get_standings as scores_get_standings
 from CTFd.utils import get_config, set_config
 
@@ -20,7 +21,7 @@ def load(app):
         scoreboard_plugin_detail = { 
             "ID" : str(__name__),
             "Name" : "Matrix Scoreboard",
-            "Link" : "/scoreboard/matrix"}
+            "Link" : "/admin/scoreboard/matrix"}
 
         empty_scoreboard_plugins = {"scoreboard_plugin_list": []}
         scoreboard_plugin_config = get_config("scoreboard_plugins", json.dumps(empty_scoreboard_plugins))
@@ -82,8 +83,9 @@ def load(app):
             return jchals
         return []
 
-    @app.route('/scoreboard/matrix', methods=['GET'])
+    @app.route('/admin/scoreboard/matrix', methods=['GET'])
     @check_score_visibility
+    @admins_only
     def scoreboard_view():
         if utils.get_config('view_scoreboard_if_authed') and not utils.user.authed():
             return redirect(url_for('auth.login', next=request.path))
@@ -95,6 +97,8 @@ def load(app):
             score_frozen=utils.config.is_scoreboard_frozen(), challenges=get_challenges(), ctf_theme=utils.config.ctf_theme())
 
     @app.route('/scores', methods=['GET'])
+    @check_score_visibility
+    @admins_only
     def scores():
         json_obj = {'standings': []}
         if utils.get_config('view_scoreboard_if_authed') and not utils.user.authed():
