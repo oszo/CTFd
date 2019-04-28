@@ -3,6 +3,7 @@ from CTFd.utils import get_config
 from CTFd.utils.modes import USERS_MODE, TEAMS_MODE
 import time
 import os
+import json
 
 
 def ctf_name():
@@ -100,3 +101,8 @@ def get_attempt_limit_count():
 
 def get_attempt_limit_type():
     return get_config("attempt_limit_type","team")
+
+
+def get_scoreboard_plugin():
+    empty_scoreboard_plugins = {"scoreboard_plugin_list": []}   
+    return get_config("scoreboard_plugins",json.dumps(empty_scoreboard_plugins))
