@@ -1,22 +1,39 @@
-from flask import render_template, jsonify, Blueprint
+from flask import render_template, render_template_string, jsonify, Blueprint
 from CTFd import utils, scoreboard, challenges
 from CTFd.utils.plugins import override_template
 from CTFd.models import db, Teams, Solves, Awards, Challenges
 from sqlalchemy.sql import or_
 from CTFd.utils.decorators.visibility import check_account_visibility, check_score_visibility
 from CTFd.utils.scores import get_standings as scores_get_standings
+from CTFd.utils import get_config, set_config
 
 import itertools
 import os
+import json
 
 
 def load(app):
-    # @check_account_visibility
-    # @check_score_visibility
 
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    template_path = os.path.join(dir_path, 'scoreboard-matrix.html')
-    override_template('scoreboard.html', open(template_path).read())
+    def regist_scoreboard_plugin():
+        print("regist_scoreboard_plugin")
+
+        scoreboard_plugin_detail = { 
+            "ID" : str(__name__),
+            "Name" : "Matrix Scoreboard",
+            "Link" : "/scoreboard/matrix"}
+
+        empty_scoreboard_plugins = {"scoreboard_plugin_list": []}
+        scoreboard_plugin_config = get_config("scoreboard_plugins", json.dumps(empty_scoreboard_plugins))
+        scoreboard_plugins = json.loads(scoreboard_plugin_config)
+        duplicate_plugin = False
+        for scoreboard_plugin in scoreboard_plugins['scoreboard_plugin_list']:
+            if str(__name__) == scoreboard_plugin['ID']:
+                duplicate_plugin = True
+        if not duplicate_plugin:
+            scoreboard_plugins['scoreboard_plugin_list'].append(scoreboard_plugin_detail)
+            set_config("scoreboard_plugins",json.dumps(scoreboard_plugins))
+
+    regist_scoreboard_plugin()
 
     matrix = Blueprint('matrix', __name__, static_folder='static')
     app.register_blueprint(matrix, url_prefix='/matrix')
@@ -61,25 +78,25 @@ def load(app):
             # Sort into groups
             categories = set(map(lambda x:x['category'], jchals))
             jchals = [j for c in categories for j in jchals if j['category'] == c]
-            print("jchals1")
-            print(jchals)
             jchals.sort()
-            print("jchals2")
-            print(jchals)
             return jchals
         return []
 
-
+    @app.route('/scoreboard/matrix', methods=['GET'])
+    @check_score_visibility
     def scoreboard_view():
         if utils.get_config('view_scoreboard_if_authed') and not utils.user.authed():
             return redirect(url_for('auth.login', next=request.path))
         standings = get_standings()
-        return render_template('scoreboard.html', teams=standings,
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        scoreboard_matrix_path = os.path.join(dir_path, 'scoreboard-matrix.html')
+        scoreboard_matrix_template = open(scoreboard_matrix_path).read()
+        return render_template_string(scoreboard_matrix_template, teams=standings,
             score_frozen=utils.config.is_scoreboard_frozen(), challenges=get_challenges(), ctf_theme=utils.config.ctf_theme())
 
     @app.route('/scores', methods=['GET'])
     def scores():
-        json = {'standings': []}
+        json_obj = {'standings': []}
         if utils.get_config('view_scoreboard_if_authed') and not utils.user.authed():
             return redirect(url_for('auth.login', next=request.path))
 
@@ -87,13 +104,13 @@ def load(app):
         standings.sort()
 
         for i, x in enumerate(standings):
-            json['standings'].append({'pos': i + 1, 'id': x['name'], 'team': x['name'],
+            json_obj['standings'].append({'pos': i + 1, 'id': x['name'], 'team': x['name'],
                 'score': int(x['score']), 'solves':x['solves']})
-        return jsonify(json)
+        return jsonify(json_obj)
 
 
     # app.view_functions['scoreboard.scoreboard_view']  = scoreboard_view
-    app.view_functions['scoreboard.listing'] = scoreboard_view
+    # app.view_functions['scoreboard.listing'] = scoreboard_view
     
     # app.view_functions['scoreboard2']  = scoreboard_view
     app.view_functions['scoreboard.scores']  = scores

@@ -64,6 +64,7 @@ def init_template_globals(app):
     app.jinja_env.globals.update(challenges_visible=challenges_visible)
     app.jinja_env.globals.update(registration_visible=registration_visible)
     app.jinja_env.globals.update(scores_visible=scores_visible)
+    app.jinja_env.globals.update(scoreboard_plugins=config.get_scoreboard_plugin)
 
 
 def init_logs(app):
