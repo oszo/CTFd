@@ -108,13 +108,8 @@ def load(app):
         standings.sort()
 
         for i, x in enumerate(standings):
-            json_obj['standings'].append({'pos': i + 1, 'id': x['name'], 'team': x['name'],
+            json_obj['standings'].append({'pos': i + 1, 'id': x['teamid'], 'team': x['name'],
                 'score': int(x['score']), 'solves':x['solves']})
         return jsonify(json_obj)
 
-
-    # app.view_functions['scoreboard.scoreboard_view']  = scoreboard_view
-    # app.view_functions['scoreboard.listing'] = scoreboard_view
-    
-    # app.view_functions['scoreboard2']  = scoreboard_view
     app.view_functions['scoreboard.scores']  = scores

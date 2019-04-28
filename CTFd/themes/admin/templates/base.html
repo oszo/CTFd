@@ -170,7 +170,7 @@
 	<script>
 		$( document ).ready(function() {
 			var original_sb_link = "{{ url_for('admin.scoreboard_listing') }}";
-			var sb_plugins = {{ scoreboard_plugins() | safe }}
+			var sb_plugins = {{ get_admin_scoreboard_plugin() | safe }}
 			if (sb_plugins.scoreboard_plugin_list.length > 0){
 				var new_scoreboard_nav = '<li class="nav-item dropdown" id="scoreboard-nav">';
 				new_scoreboard_nav += '	<a class="nav-link dropdown-toggle" href="#" id="navbar-scoreboard-dropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Scoreboard</a>';

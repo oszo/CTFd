@@ -13,7 +13,7 @@ from CTFd.utils.plugins import (
     register_admin_stylesheet as utils_register_admin_plugin_stylesheet
 )
 from CTFd.utils.config.pages import get_pages
-
+from CTFd.utils.config import get_scoreboard_plugin
 
 Menu = namedtuple('Menu', ['title', 'route'])
 
@@ -154,6 +154,9 @@ def bypass_csrf_protection(f):
     return f
 
 
+def get_admin_scoreboard_plugin():
+    return get_scoreboard_plugin()
+
 def init_plugins(app):
     """
     Searches for the load function in modules in the CTFd/plugins folder. This function is called with the current CTFd
@@ -183,3 +186,4 @@ def init_plugins(app):
 
     app.jinja_env.globals.update(get_admin_plugin_menu_bar=get_admin_plugin_menu_bar)
     app.jinja_env.globals.update(get_user_page_menu_bar=get_user_page_menu_bar)
+    app.jinja_env.globals.update(get_admin_scoreboard_plugin=get_admin_scoreboard_plugin)
