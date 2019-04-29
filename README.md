@@ -1,4 +1,4 @@
-![](https://github.com/CTFd/CTFd/blob/master/CTFd/themes/core/static/img/logo.png?raw=true)
+![](https://github.com/oszo/CTFd/blob/master/CTFd/themes/core/static/img/logo.png?raw=true)
 ====
 
 [![Build Status](https://travis-ci.org/CTFd/CTFd.svg?branch=master)](https://travis-ci.org/CTFd/CTFd)
@@ -21,11 +21,13 @@ CTFd is a Capture The Flag framework focusing on ease of use and customizability
     * File uploads to the server or an Amazon S3-compatible backend
     * Limit challenge attempts & hide challenges
     * Automatic bruteforce protection
+    * Prevent attemption/duration
 * Individual and Team based competitions
     * Have users play on their own or form teams to play together
  * Scoreboard with automatic tie resolution
     * Hide Scores from the public
     * Freeze Scores at a specific time
+    * Add plugins to the initial(CTFd Event Countdown, CTFd Matrix Score)
  * Scoregraphs comparing the top 10 teams and team progress graphs
  * Markdown content management system
  * SMTP + Mailgun email support
@@ -77,6 +79,6 @@ OAUTH_CLIENT_SECRET = None
 ```
 
 ## Credits
- * Logo by [Laura Barbera](http://www.laurabb.com/)
+ * Logo by [Navy Cyber](#)
  * Theme by [Christopher Thompson](https://github.com/breadchris)
  * Notification Sound by [Terrence Martin](https://soundcloud.com/tj-martin-composer)
