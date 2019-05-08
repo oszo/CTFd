@@ -41,8 +41,6 @@ $(document).ready(function () {
 
                 var layout = {
                     title: 'Score over Time',
-                    paper_bgcolor: 'rgba(0,0,0,0)',
-                    plot_bgcolor: 'rgba(0,0,0,0)',
                     hovermode: 'closest',
                     xaxis: {
                         showgrid: false,
@@ -54,6 +52,11 @@ $(document).ready(function () {
                     },
                     legend: {
                         "orientation": "h"
+                    },
+                    plot_bgcolor: '#00000000',
+                    paper_bgcolor: '#343a40aa',
+                    font : {
+                        color : '#fff'
                     }
                 };
 
@@ -86,10 +89,13 @@ $(document).ready(function () {
 
                 var layout = {
                     title: 'Solve Percentages',
-                    paper_bgcolor: 'rgba(0,0,0,0)',
-                    plot_bgcolor: 'rgba(0,0,0,0)',
                     legend: {
                         "orientation": "h"
+                    },
+                    plot_bgcolor: '#00000000',
+                    paper_bgcolor: '#343a40aa',
+                    font : {
+                        color : '#fff'
                     }
                 };
 
@@ -133,10 +139,13 @@ $(document).ready(function () {
 
             var layout = {
                 title: 'Category Breakdown',
-                paper_bgcolor: 'rgba(0,0,0,0)',
-                plot_bgcolor: 'rgba(0,0,0,0)',
                 legend: {
                     "orientation": "v"
+                },
+                plot_bgcolor: '#00000000',
+                paper_bgcolor: '#343a40aa',
+                font : {
+                    color : '#fff'
                 }
             };
 

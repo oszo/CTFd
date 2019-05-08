@@ -53,6 +53,11 @@ function solves_graph() {
             },
             yaxis: {
                 title: 'Amount of Solves'
+            },
+            plot_bgcolor: '#00000000',
+            paper_bgcolor: '#343a40aa',
+            font : {
+                color : '#fff'
             }
         };
 
@@ -85,7 +90,12 @@ function keys_percentage_graph() {
         }];
 
         var layout = {
-            title: 'Submission Percentages'
+            title: 'Submission Percentages',
+            plot_bgcolor: '#00000000',
+            paper_bgcolor: '#343a40aa',
+            font : {
+                color : '#fff'
+            }
         };
 
         $('#keys-pie-graph').empty();
@@ -122,7 +132,12 @@ function category_breakdown_graph() {
         }];
 
         var layout = {
-            title: 'Category Breakdown'
+            title: 'Category Breakdown',
+            plot_bgcolor: '#00000000',
+            paper_bgcolor: '#343a40aa',
+            font : {
+                color : '#fff'
+            }
         };
 
         $('#categories-pie-graph').empty();
@@ -172,7 +187,12 @@ function solve_percentages_graph() {
                 title: 'Percentage of {0} (%)'.format(user_mode.charAt(0).toUpperCase() + user_mode.slice(1)),
                 range: [0, 100]
             },
-            annotations: annotations
+            annotations: annotations,
+            plot_bgcolor: '#00000000',
+            paper_bgcolor: '#343a40aa',
+            font : {
+                color : '#fff'
+            }
         };
 
         $('#solve-percentages-graph').empty();

@@ -5,3 +5,122 @@ tbody tr:hover {
 tr[data-href] {
     cursor: pointer;
 }
+
+/* Custom admin theme */
+body {
+    color: #ffffff;
+    background-color: #343a40!important;
+    background-image: url(/themes/admin/static/img/Navy-Cyber-Graphic-2.jpg);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+a {
+    color: #007bff;
+}
+
+.jumbotron {
+    background-color: #222529dd;
+    color: #FFF;
+}
+
+.form-control {
+    background: #f0f0f0;
+    color: #343a40;
+}
+
+.form-control:focus {
+    background-color: #fff;
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem #28a745;
+}
+
+.input-filled-valid {
+    background-color: #fff;
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem #28a745;
+}
+
+.input-filled-invalid {
+    background-color: #fff;
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem #dc3545;
+}
+
+.btn-outlined.btn-theme {
+    background: none;
+    color: rgb(255, 0, 0);
+    border-color: rgb(255, 0, 247);
+}
+
+.btn-info {
+    background-color: #5B7290 !important;
+    border-color: #5B7290 !important;
+}
+
+.badge-info {
+    background-color: #5B7290 !important;
+}
+
+.modal-content{
+    color: #343a41;
+}
+
+pre {
+    color: #fff;
+}
+
+.table {
+    background-color: #343a40aa;
+}
+
+.text-muted {
+    color: #bbbbbb!important;
+}
+
+.nav-tabs .nav-link {
+    color: #343a41;
+    background-color: #ffffff77;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+.nav-tabs .nav-link.active {
+    color: #495057;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+.tab-pane {
+    background-color: #fff;
+    color: #495057;
+    border-color: #dee2e6 #dee2e6 #fff;
+    padding-bottom: 1rem;
+}
+
+.nav.nav-tabs.mb-3  .nav-link {
+    color: #ffffff;
+    background-color: transparent;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+.nav.nav-tabs.mb-3  .nav-link.active {
+    color: #343a41;
+    background-color: #ffffff77;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+.tab-pane .table.table-striped{
+    background-color: #fff;
+}
+
+.tab-pane.config-section {
+    color: #ffffff;
+    background-color: transparent;
+}
+
+.tab-pane.config-section .tab-content  .tab-pane {
+    background-color: transparent;
+    color: #ffffff;
+    border-color: #dee2e6 #dee2e6 #fff;
+    padding-bottom: 0rem;
+}
