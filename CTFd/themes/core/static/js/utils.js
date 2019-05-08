@@ -75,7 +75,11 @@ function colorhash(str) {
   }
   var colour = '#';
   for (var i = 0; i < 3; i++) {
-    var value = (hash >> (i * 8)) & 0xFF;
+    var base=0x99;
+    var value = ((hash >> (i * 8)) & 0xFF) > base ? ((hash >> (i * 8)) & 0xFF) : (((hash >> (i * 8)) + base) & 0xFF);
+    if (i == 2){
+        value = ((hash >> (i * 8)) & 0xFF) < base ? ((hash >> (i * 8)) & 0xFF) : (((hash >> (i * 8)) - base) & 0xFF);
+    }
     colour += ('00' + value.toString(16)).substr(-2);
   }
   return colour;
