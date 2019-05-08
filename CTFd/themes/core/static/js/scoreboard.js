@@ -6,8 +6,8 @@ function updatescores () {
         for (var i = 0; i < teams.length; i++) {
             var row = "<tr>\n" +
                 "<th scope=\"row\" class=\"text-center\">{0}</th>".format(i + 1) +
-                "<td><a href=\"{0}/team/{1}\">{2}</a></td>".format(script_root, teams['standings'][i].id, htmlentities(teams['standings'][i].team)) +
-                "<td>{0}</td>".format(teams['standings'][i].score) +
+                "<td><a href=\"{0}/teams/{1}\">{2}</a></td>".format(script_root, teams[i].account_id, htmlentities(teams[i].name)) +
+                "<td>{0}</td>".format(teams[i].score) +
                 "</tr>";
             table.append(row);
         }
@@ -57,10 +57,11 @@ function scoregraph () {
                 mode: 'lines+markers',
                 name: places[teams[i]]['name'],
                 marker: {
-                    color: colorhash(places[teams[i]]['name'] + places[teams[i]]['id']),
+                    color: colorhash(places[teams[i]]['id'] + places[teams[i]]['name']),
                 },
                 line: {
-                    color: colorhash(places[teams[i]]['name'] + places[teams[i]]['id']),
+                    color: colorhash(places[teams[i]]['id'] + places[teams[i]]['name']),
+                    width: 4
                 }
             };
             traces.push(trace);
@@ -76,19 +77,27 @@ function scoregraph () {
 
         var layout = {
             title: 'Top 10 Teams',
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            plot_bgcolor: 'rgba(0,0,0,0)',
             hovermode: 'closest',
             xaxis: {
                 showgrid: false,
                 showspikes: true,
             },
             yaxis: {
-                showgrid: false,
+                showgrid: true,
                 showspikes: true,
+                showline: true,
+                gridcolor: '#ffffff77',
+                linecolor: '#ffffff77',
+                gridwidth: 2,
+                linewidth: 2
             },
             legend: {
                 "orientation": "h"
+            },
+            plot_bgcolor: '#00000000',
+            paper_bgcolor: '#00000000',
+            font : {
+                color : '#fff'
             }
         };
 
@@ -106,7 +115,7 @@ function update(){
   scoregraph();
 }
 
-setInterval(update, 300000); // Update scores every 5 minutes
+setInterval(update, 15000); // Update scores every 15 sec
 scoregraph();
 
 window.onresize = function () {

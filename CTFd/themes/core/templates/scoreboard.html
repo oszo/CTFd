@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block stylesheets %}
+<link rel="stylesheet" href="{{ url_for('views.themes', path='css/scoreboard.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="jumbotron">
 	<div class="container">
