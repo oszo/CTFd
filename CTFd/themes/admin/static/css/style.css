@@ -113,6 +113,10 @@ pre {
     background-color: #fff;
 }
 
+.tab-pane pre{
+    color: #343a41;
+}
+
 .tab-pane.config-section {
     color: #ffffff;
     background-color: transparent;
