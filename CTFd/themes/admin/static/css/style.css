@@ -128,3 +128,7 @@ pre {
     border-color: #dee2e6 #dee2e6 #fff;
     padding-bottom: 0rem;
 }
+
+.card.bg-light{
+    background-color: #343a40aa!important;
+}
