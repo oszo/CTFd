@@ -187,9 +187,11 @@
 		if( pathname == '/'){
 			$("body").css('color', '#ffffff');
 			$("body").css('background-color', '#0d092e');
-			$("body").css('background-image', 'url(/themes/dark-motion/static/img/Navy-Cyber-Graphic-2.jpg)');
-			$("body").css('background-repeat', 'no-repeat');
-			$("body").css('background-attachment', 'fixed');
+			$("body").css('background', 'url(/themes/dark-motion/static/img/Navy-Cyber-BG-Home.jpg) no-repeat center center fixed');
+			$("body").css('-webkit-background-size', 'cover');
+			$("body").css('-moz-background-size', 'cover');
+			$("body").css('-o-background-size', 'cover');
+			$("body").css('background-size', 'cover');
 		}else{
 			VANTA.NET({
 				el: "#net-background",
