@@ -333,7 +333,37 @@ class Users(db.Model):
             .filter(Users.id == self.id)
 
         award_score = db.func.sum(Awards.value).label('award_score')
-        award = db.session.query(award_score).filter_by(user_id=self.id)
+        # print("award_score")
+        # print(award_score)
+
+        hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
+        # award = db.session.query(
+        #     Awards.id.label('awards_id'),
+        #     Awards.account_id.label('awards_account_id'),
+        #     Awards.name.label('awards_name'),
+        #     Awards.value.label('awards_value'),
+        #     Solves.challenge_id.label('solves_challenge_id')
+        # ) \
+        #     .join(Hints, Awards.name == hints_name) \
+        #     .join(Solves, (Awards.user_id == Solves.user_id) & (Hints.challenge_id == Solves.challenge_id)) \
+        #     .filter(Awards.user_id == self.id)
+        award = db.session.query(
+            award_score
+        ) \
+            .join(Hints, Awards.name == hints_name) \
+            .join(Solves, (Awards.user_id == Solves.user_id) & (Hints.challenge_id == Solves.challenge_id)) \
+            .filter(Awards.user_id == self.id)            
+        # print("award")
+        # print(award)
+        # awards = award.all()
+        # print(len(awards))
+        # for award in awards:
+        #     print("award.first()")
+        #     print("awards_id : " + str(award.awards_id))
+        #     print("awards_account_id : " + str(award.awards_account_id))
+        #     print("awards_name : " + str(award.awards_name))
+        #     print("awards_value : " + str(award.awards_value))
+        #     print("solves_challenge_id : " + str(award.solves_challenge_id))        
 
         if not admin:
             freeze = Configs.query.filter_by(key='freeze').first()
@@ -344,6 +374,7 @@ class Users(db.Model):
                 award = award.filter(Awards.date < freeze)
 
         user = user.group_by(Solves.user_id).first()
+        # award = db.session.query(award_score).filter_by(user_id=self.id)
         award = award.first()
 
         if user and award:
@@ -554,12 +585,16 @@ class Teams(db.Model):
             db.func.max(Solves.date).label('date')
         ).join(Challenges).filter(Challenges.value != 0).group_by(Solves.team_id)
 
+        hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
         awards = db.session.query(
             Awards.team_id.label('team_id'),
             db.func.sum(Awards.value).label('score'),
             db.func.max(Awards.id).label('id'),
             db.func.max(Awards.date).label('date')
-        ).filter(Awards.value != 0).group_by(Awards.team_id)
+        ) \
+            .join(Hints, Awards.name == hints_name) \
+            .join(Solves, (Awards.user_id == Solves.user_id) & (Hints.challenge_id == Solves.challenge_id)) \
+            .filter(Awards.value != 0).group_by(Awards.team_id)
 
         if not admin:
             freeze = Configs.query.filter_by(key='freeze').first()
@@ -575,24 +610,50 @@ class Teams(db.Model):
             results.columns.team_id,
             db.func.sum(results.columns.score).label('score'),
             db.func.max(results.columns.id).label('id'),
-            db.func.max(results.columns.date).label('date')
+            db.func.max(results.columns.date).label('date'),
+            db.func.count(results.columns.score < 0).label('hint')
         ).group_by(results.columns.team_id).subquery()
+
+        sumscores2 = db.session.query(
+            results.columns.team_id,
+            results.columns.score.label('score'),
+            results.columns.id.label('id'),
+            results.columns.date.label('date'),
+        )
+        sumscores2all = sumscores2.all()
+        for sumscores2sub in sumscores2all:
+            print("[ sumscores2all ]")
+            print(sumscores2sub.team_id)
+            print(sumscores2sub.score)
+            print(sumscores2sub.id)
+            print(sumscores2sub.date)
 
         if admin:
             standings_query = db.session.query(
                 Teams.id.label('team_id'),
+                sumscores.columns.score.label('score'),
+                sumscores.columns.id.label('id'),
+                sumscores.columns.date.label('date'),                
+                sumscores.columns.hint.label('hint'),
             ) \
                 .join(sumscores, Teams.id == sumscores.columns.team_id) \
-                .order_by(sumscores.columns.score.desc(), sumscores.columns.id)
+                .order_by(sumscores.columns.score.desc(), sumscores.columns.hint.desc(), sumscores.columns.id)
         else:
             standings_query = db.session.query(
                 Teams.id.label('team_id'),
             ) \
                 .join(sumscores, Teams.id == sumscores.columns.team_id) \
                 .filter(Teams.banned == False) \
-                .order_by(sumscores.columns.score.desc(), sumscores.columns.id)
+                .order_by(sumscores.columns.score.desc(), sumscores.columns.hint.desc(), sumscores.columns.id)
 
         standings = standings_query.all()
+        for standing in standings:
+            print("[ standing ]")
+            print(standing.team_id)
+            print(standing.score)
+            print(standing.id)
+            print(standing.date)
+            print(standing.hint)
 
         # http://codegolf.stackexchange.com/a/4712
         try:
