@@ -397,14 +397,16 @@ class Users(db.Model):
             Solves.user_id.label('user_id'),
             db.func.sum(Challenges.value).label('score'),
             db.func.max(Solves.id).label('id'),
-            db.func.max(Solves.date).label('date')
+            db.func.max(Solves.date).label('date'),
+            db.func.concat("0", "").cast(db.Integer).label('unlock_count')
         ).join(Challenges).filter(Challenges.value != 0).group_by(Solves.user_id)
 
         awards = db.session.query(
             Awards.user_id.label('user_id'),
             db.func.sum(Awards.value).label('score'),
             db.func.max(Awards.id).label('id'),
-            db.func.max(Awards.date).label('date')
+            db.func.max(Awards.date).label('date'),
+            db.func.count(Awards.value < 0).label('unlock_count')
         ).filter(Awards.value != 0).group_by(Awards.user_id)
 
         if not admin:
@@ -421,7 +423,8 @@ class Users(db.Model):
             results.columns.user_id,
             db.func.sum(results.columns.score).label('score'),
             db.func.max(results.columns.id).label('id'),
-            db.func.max(results.columns.date).label('date')
+            db.func.max(results.columns.date).label('date'),
+            db.func.sum(results.columns.unlock_count).label('unlock_count'),
         ).group_by(results.columns.user_id).subquery()
 
         if admin:
@@ -429,14 +432,14 @@ class Users(db.Model):
                 Users.id.label('user_id'),
             ) \
                 .join(sumscores, Users.id == sumscores.columns.user_id) \
-                .order_by(sumscores.columns.score.desc(), sumscores.columns.id)
+                .order_by(sumscores.columns.score.desc(), sumscores.columns.unlock_count.asc(), sumscores.columns.date.asc(), sumscores.columns.id)
         else:
             standings_query = db.session.query(
                 Users.id.label('user_id'),
             ) \
                 .join(sumscores, Users.id == sumscores.columns.user_id) \
                 .filter(Users.banned == False, Users.hidden == False) \
-                .order_by(sumscores.columns.score.desc(), sumscores.columns.id)
+                .order_by(sumscores.columns.score.desc(), sumscores.columns.unlock_count.asc(), sumscores.columns.date.asc(), sumscores.columns.id)
 
         standings = standings_query.all()
 
@@ -582,7 +585,8 @@ class Teams(db.Model):
             Solves.team_id.label('team_id'),
             db.func.sum(Challenges.value).label('score'),
             db.func.max(Solves.id).label('id'),
-            db.func.max(Solves.date).label('date')
+            db.func.max(Solves.date).label('date'),
+            db.func.concat("0", "").cast(db.Integer).label('unlock_count')
         ).join(Challenges).filter(Challenges.value != 0).group_by(Solves.team_id)
 
         hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
@@ -590,7 +594,8 @@ class Teams(db.Model):
             Awards.team_id.label('team_id'),
             db.func.sum(Awards.value).label('score'),
             db.func.max(Awards.id).label('id'),
-            db.func.max(Awards.date).label('date')
+            db.func.max(Awards.date).label('date'),
+            db.func.count(Awards.value < 0).label('unlock_count')
         ) \
             .join(Hints, Awards.name == hints_name) \
             .join(Solves, (Awards.user_id == Solves.user_id) & (Hints.challenge_id == Solves.challenge_id)) \
@@ -611,49 +616,25 @@ class Teams(db.Model):
             db.func.sum(results.columns.score).label('score'),
             db.func.max(results.columns.id).label('id'),
             db.func.max(results.columns.date).label('date'),
-            db.func.count(results.columns.score < 0).label('hint')
+            db.func.sum(results.columns.unlock_count).label('unlock_count'),
         ).group_by(results.columns.team_id).subquery()
 
-        sumscores2 = db.session.query(
-            results.columns.team_id,
-            results.columns.score.label('score'),
-            results.columns.id.label('id'),
-            results.columns.date.label('date'),
-        )
-        sumscores2all = sumscores2.all()
-        for sumscores2sub in sumscores2all:
-            print("[ sumscores2all ]")
-            print(sumscores2sub.team_id)
-            print(sumscores2sub.score)
-            print(sumscores2sub.id)
-            print(sumscores2sub.date)
 
         if admin:
             standings_query = db.session.query(
-                Teams.id.label('team_id'),
-                sumscores.columns.score.label('score'),
-                sumscores.columns.id.label('id'),
-                sumscores.columns.date.label('date'),                
-                sumscores.columns.hint.label('hint'),
+                Teams.id.label('team_id'),          
             ) \
                 .join(sumscores, Teams.id == sumscores.columns.team_id) \
-                .order_by(sumscores.columns.score.desc(), sumscores.columns.hint.desc(), sumscores.columns.id)
+                .order_by(sumscores.columns.score.desc(), sumscores.columns.unlock_count.asc(), sumscores.columns.date.asc(), sumscores.columns.id)
         else:
             standings_query = db.session.query(
                 Teams.id.label('team_id'),
             ) \
                 .join(sumscores, Teams.id == sumscores.columns.team_id) \
                 .filter(Teams.banned == False) \
-                .order_by(sumscores.columns.score.desc(), sumscores.columns.hint.desc(), sumscores.columns.id)
+                .order_by(sumscores.columns.score.desc(), sumscores.columns.unlock_count.asc(), sumscores.columns.date.asc(), sumscores.columns.id)
 
         standings = standings_query.all()
-        for standing in standings:
-            print("[ standing ]")
-            print(standing.team_id)
-            print(standing.score)
-            print(standing.id)
-            print(standing.date)
-            print(standing.hint)
 
         # http://codegolf.stackexchange.com/a/4712
         try:
