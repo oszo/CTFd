@@ -333,37 +333,14 @@ class Users(db.Model):
             .filter(Users.id == self.id)
 
         award_score = db.func.sum(Awards.value).label('award_score')
-        # print("award_score")
-        # print(award_score)
 
         hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
-        # award = db.session.query(
-        #     Awards.id.label('awards_id'),
-        #     Awards.account_id.label('awards_account_id'),
-        #     Awards.name.label('awards_name'),
-        #     Awards.value.label('awards_value'),
-        #     Solves.challenge_id.label('solves_challenge_id')
-        # ) \
-        #     .join(Hints, Awards.name == hints_name) \
-        #     .join(Solves, (Awards.user_id == Solves.user_id) & (Hints.challenge_id == Solves.challenge_id)) \
-        #     .filter(Awards.user_id == self.id)
         award = db.session.query(
             award_score
         ) \
             .join(Hints, Awards.name == hints_name) \
             .join(Solves, (Awards.user_id == Solves.user_id) & (Hints.challenge_id == Solves.challenge_id)) \
-            .filter(Awards.user_id == self.id)            
-        # print("award")
-        # print(award)
-        # awards = award.all()
-        # print(len(awards))
-        # for award in awards:
-        #     print("award.first()")
-        #     print("awards_id : " + str(award.awards_id))
-        #     print("awards_account_id : " + str(award.awards_account_id))
-        #     print("awards_name : " + str(award.awards_name))
-        #     print("awards_value : " + str(award.awards_value))
-        #     print("solves_challenge_id : " + str(award.solves_challenge_id))        
+            .filter(Awards.user_id == self.id)                 
 
         if not admin:
             freeze = Configs.query.filter_by(key='freeze').first()
@@ -374,7 +351,6 @@ class Users(db.Model):
                 award = award.filter(Awards.date < freeze)
 
         user = user.group_by(Solves.user_id).first()
-        # award = db.session.query(award_score).filter_by(user_id=self.id)
         award = award.first()
 
         if user and award:
