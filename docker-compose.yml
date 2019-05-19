@@ -1,16 +1,16 @@
 version: '2'
 
 services:
-  ctfd_dev:
+  ctfd:
     build: .
     restart: always
     ports:
-      - "9000:8000"
+      - "8000:8000"
     environment:
       - SECRET_KEY=SECRET_KEY_TEST
       - UPLOAD_FOLDER=/var/uploads
-      - DATABASE_URL=mysql+pymysql://root:ctfd@db_dev/ctfd
-      - REDIS_URL=redis://cache_dev:6379
+      - DATABASE_URL=mysql+pymysql://root:ctfd@db/ctfd
+      - REDIS_URL=redis://cache:6379
       - WORKERS=4
       - LOG_FOLDER=/var/log/CTFd
       - ACCESS_LOG=-
@@ -18,12 +18,12 @@ services:
     volumes:
       - .:/opt/CTFd:ro
     depends_on:
-      - db_dev
+      - db
     networks:
         default:
         internal:
 
-  db_dev:
+  db:
     image: mariadb:10.4
     restart: always
     environment:
@@ -37,7 +37,7 @@ services:
     # This command is required to set important mariadb defaults
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800, --log-warnings=0]
 
-  cache_dev:
+  cache:
     image: redis:4
     restart: always
     volumes:
