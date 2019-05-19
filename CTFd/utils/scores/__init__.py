@@ -29,18 +29,31 @@ def get_standings(count=None, admin=False):
         .filter(Challenges.value != 0) \
         .group_by(Solves.account_id)
 
-    hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
     awards = db.session.query(
         Awards.account_id.label('account_id'),
         db.func.sum(Awards.value).label('score'),
         db.func.max(Awards.id).label('id'),
         db.func.max(Awards.date).label('date'),
-        db.func.count(Awards.value < 0).label('unlock_count')
+        db.func.concat("0", "").cast(db.Integer).label('unlock_count')
     ) \
-        .join(Hints, Awards.name == hints_name) \
-        .join(Solves, (Awards.account_id == Solves.account_id) & (Hints.challenge_id == Solves.challenge_id)) \
         .filter(Awards.value != 0) \
         .group_by(Awards.account_id)
+    hints_name_list =  db.session.query(
+        db.func.concat("Hint ", Hints.id).label("hints_name")
+    ).count()
+    if hints_name_list > 0:
+        hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
+        awards = db.session.query(
+            Awards.account_id.label('account_id'),
+            db.func.sum(Awards.value).label('score'),
+            db.func.max(Awards.id).label('id'),
+            db.func.max(Awards.date).label('date'),
+            db.func.count(Awards.value < 0).label('unlock_count')
+        ) \
+            .join(Hints, Awards.name == hints_name) \
+            .join(Solves, (Awards.account_id == Solves.account_id) & (Hints.challenge_id == Solves.challenge_id)) \
+            .filter(Awards.value != 0) \
+            .group_by(Awards.account_id)
     """
     Filter out solves and awards that are before a specific time point.
     """
