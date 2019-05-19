@@ -35,11 +35,7 @@ function update(){
     updatescores();
 }
 
-<<<<<<< HEAD
-setInterval(update, 3000); // Update scores every 30 Sec
-=======
 setInterval(update, 30000); // Update scores every 30 Sec
->>>>>>> add-plugin
 
 
 
