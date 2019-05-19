@@ -66,20 +66,21 @@ def load(app):
             chals = db.session.query(
                     Challenges.id,
                     Challenges.name,
-                    Challenges.category
+                    Challenges.category,
+                    Challenges.value
                 ).all()
             jchals = []
             for x in chals:
                 jchals.append({
                     'id':x.id,
                     'name':x.name,
-                    'category':x.category
+                    'category':x.category,
+                    'value':x.value
                 })
 
             # Sort into groups
             categories = set(map(lambda x:x['category'], jchals))
             jchals = [j for c in categories for j in jchals if j['category'] == c]
-            jchals.sort()
             return jchals
         return []
 
@@ -105,16 +106,10 @@ def load(app):
             return redirect(url_for('auth.login', next=request.path))
 
         standings = get_standings()
-        standings.sort()
 
         for i, x in enumerate(standings):
             json_obj['standings'].append({'pos': i + 1, 'id': x['name'], 'team': x['name'],
                 'score': int(x['score']), 'solves':x['solves']})
         return jsonify(json_obj)
 
-
-    # app.view_functions['scoreboard.scoreboard_view']  = scoreboard_view
-    # app.view_functions['scoreboard.listing'] = scoreboard_view
-    
-    # app.view_functions['scoreboard2']  = scoreboard_view
     app.view_functions['scoreboard.scores']  = scores

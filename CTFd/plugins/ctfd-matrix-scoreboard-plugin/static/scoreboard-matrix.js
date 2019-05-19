@@ -6,7 +6,7 @@ function updatescores () {
             row = "<tr><td>{0}</td><td><a href='/team/{1}'>{2}</a></td><td>{3}</td>".format(i+1, teams['standings'][i].id, htmlentities(teams['standings'][i].team), teams['standings'][i].score);
             for (var j = 0; j < challenges.length; j++) {
                 if (teams['standings'][i].solves.indexOf(challenges[j].id) != -1) {
-                    row += '<td class="chalmark">✔</td>';
+                    row += '<td class="chalmark">' + challenges[j].value + '</td>';
                 } else {
                     row += '<td class="chalmark"></td>';
                 }
@@ -35,7 +35,7 @@ function update(){
     updatescores();
 }
 
-setInterval(update, 300); // Update scores every 5 minutes
+setInterval(update, 30000); // Update scores every 5 minutes
 
 
 
