@@ -94,7 +94,7 @@ th.chalname {
                 {% for chal in challenges %}
                     <td class="chalmark">
                     {% if chal.id in team.solves %}
-                    ✔
+                    {{ chal.value }}
                     {% else %}
 
                     {% endif %}
