@@ -10,6 +10,8 @@ from CTFd.models import (
     Solves,
     Fails,
     ChallengeFiles as ChallengeFilesModel,
+    Awards,
+    Configs
 )
 from CTFd.plugins.challenges import CHALLENGE_CLASSES
 from CTFd.utils.dates import isoformat
@@ -99,7 +101,7 @@ class ChallengeList(Resource):
                 'id': challenge.id,
                 'type': challenge_type.name,
                 'name': challenge.name,
-                'value': challenge.value,
+                'value': (challenge.value + self.get_awards_value(user.account_id, challenge.id)),
                 'category': challenge.category,
                 'tags': tag_schema.dump(challenge.tags).data,
                 'template': challenge_type.templates['view'],
@@ -111,6 +113,37 @@ class ChallengeList(Resource):
             'success': True,
             'data': response
         }
+    
+    def get_awards_value(self, user_account_id, challenge_id):
+        hints_name_list =  db.session.query(
+            db.func.concat("Hint ", Hints.id).label("hints_name")
+        ).count()
+        if hints_name_list > 0:
+
+            hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
+            pre_award_score = db.func.sum(Awards.value).label('score')
+            pre_award = db.session.query(
+                pre_award_score
+            ) \
+                .join(Hints, Awards.name == hints_name) \
+                .filter(Awards.account_id == user_account_id) \
+                .filter(Hints.challenge_id == challenge_id) \
+
+            freeze = Configs.query.filter_by(key='freeze').first()
+            if freeze and freeze.value:
+                freeze = int(freeze.value)
+                freeze = datetime.datetime.utcfromtimestamp(freeze)
+                pre_award = pre_award.filter(Awards.date < freeze)
+
+            pre_award = pre_award.first()
+
+            if pre_award:
+                return int(pre_award.score or 0)
+            else:
+                return 0
+        else:
+            return 0
+
 
     @admins_only
     def post(self):
