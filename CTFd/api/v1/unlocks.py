@@ -1,7 +1,15 @@
 from flask import request
 from flask_restplus import Namespace, Resource
-from CTFd.models import db, get_class_by_tablename, Unlocks
+from CTFd.models import (
+    db, 
+    get_class_by_tablename, 
+    Unlocks, 
+    HintUnlocks, 
+    Hints
+)
 from CTFd.utils.user import get_current_user
+from CTFd.utils.user import get_current_team
+from CTFd.utils import config
 from CTFd.schemas.unlocks import UnlockSchema
 from CTFd.schemas.awards import AwardSchema
 from CTFd.utils.decorators import (
@@ -46,12 +54,23 @@ class UnlockList(Resource):
         Model = get_class_by_tablename(req['type'])
         target = Model.query.filter_by(id=req['target']).first_or_404()
 
-        if target.cost > user.score:
+        unlocked_hints = set()
+        hints = []
+        team = get_current_team()
+
+        if config.is_teams_mode() and team is None:
+            abort(403)
+
+        unlocked_hints = set([
+            u.target for u in HintUnlocks.query.filter_by(type='hints', account_id=user.account_id)
+        ])
+        print("unlocked_hints")
+        print(unlocked_hints)
+
+        if req['target'] in unlocked_hints:
             return {
                 'success': False,
-                'errors': {
-                    'score': 'You do not have enough points to unlock this hint'
-                }
+                'errors': 'Duplicate unlock'
             }, 400
 
         schema = UnlockSchema()
@@ -66,6 +85,11 @@ class UnlockList(Resource):
         db.session.add(response.data)
 
         award_schema = AwardSchema()
+        print("[target]")
+        print(target.name)
+        print(target.challenge_id)
+        print(target.cost)
+        print(target.category)
         award = {
             'user_id': user.id,
             'team_id': user.team_id,
