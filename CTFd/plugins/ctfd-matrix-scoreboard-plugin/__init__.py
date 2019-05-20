@@ -1,7 +1,7 @@
 from flask import render_template, render_template_string, jsonify, Blueprint
 from CTFd import utils, scoreboard, challenges
 from CTFd.utils.plugins import override_template
-from CTFd.models import db, Teams, Solves, Awards, Challenges
+from CTFd.models import db, Teams, Solves, Awards, Challenges, Hints
 from sqlalchemy.sql import or_
 from CTFd.utils.decorators.visibility import check_account_visibility, check_score_visibility
 from CTFd.utils.decorators import admins_only
@@ -49,7 +49,30 @@ def load(app):
             jsolves = []
             for solve in solves:
                 jsolves.append(solve.challenge_id)
-            jstandings.append({'teamid':account.account_id, 'score':account.score, 'name':account.name,'solves':jsolves})
+
+            jawards = []
+            hints_name_list =  db.session.query(
+                db.func.concat("Hint ", Hints.id).label("hints_name")
+            ).count()
+            if hints_name_list > 0:
+                hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
+                award_score = db.func.sum(Awards.value).label('award_score')
+                award_query = db.session.query(
+                    Solves.challenge_id.label('challenge_id'),
+                    award_score
+                ) \
+                    .join(Hints, Awards.name == hints_name) \
+                    .join(Solves, (Awards.user_id == Solves.user_id) & (Hints.challenge_id == Solves.challenge_id)) \
+                    .filter(Solves.account_id == account_id) \
+                    .group_by(Solves.challenge_id)
+                awards = award_query.all()
+                for award in awards:
+                    challenge_id_value = award.challenge_id
+                    award_score_value = award.award_score
+                    if (challenge_id_value is not None) and (award_score_value is not None):                    
+                        jawards.append({'challenge_id':int(challenge_id_value),'award_score':int(award_score_value)})
+
+            jstandings.append({'teamid':account.account_id, 'score':int(account.score), 'name':account.name,'solves':jsolves,'awards':jawards})
         db.session.close()
         return jstandings
 
@@ -108,8 +131,7 @@ def load(app):
         standings = get_standings()
 
         for i, x in enumerate(standings):
-            json_obj['standings'].append({'pos': i + 1, 'id': x['teamid'], 'team': x['name'],
-                'score': int(x['score']), 'solves':x['solves']})
+            json_obj['standings'].append({'pos': i + 1, 'id': x['teamid'], 'team': x['name'], 'score': int(x['score']), 'solves':x['solves'], 'awards':x['awards']})
         return jsonify(json_obj)
 
     app.view_functions['scoreboard.scores']  = scores
