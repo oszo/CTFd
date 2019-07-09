@@ -54,6 +54,18 @@ def get_standings(count=None, admin=False):
             .join(Solves, (Awards.account_id == Solves.account_id) & (Hints.challenge_id == Solves.challenge_id)) \
             .filter(Awards.value != 0) \
             .group_by(Awards.account_id)
+        awards_by_admin = db.session.query(
+            Awards.account_id.label('account_id'),
+            db.func.sum(Awards.value).label('score'),
+            db.func.max(Awards.id).label('id'),
+            db.func.max(Awards.date).label('date'),
+            db.func.concat("0", "").cast(db.Integer).label('unlock_count')
+        ) \
+            .filter(Awards.value > 0) \
+            .group_by(Awards.account_id)
+
+        awards = awards.union(awards_by_admin)
+
     """
     Filter out solves and awards that are before a specific time point.
     """
@@ -66,7 +78,8 @@ def get_standings(count=None, admin=False):
     Combine awards and solves with a union. They should have the same amount of columns
     """
     results = union_all(scores, awards).alias('results')
-
+    print("results>>>")
+    print(results)
     """
     Sum each of the results by the team id to get their score.
     """

@@ -90,6 +90,18 @@ class ScoreboardDetail(Resource):
                 .filter(Awards.value != 0) \
                 .filter(Awards.account_id.in_(team_ids))
 
+            awards_by_admin = db.session.query(
+                Awards.account_id.label('account_id'),
+                Awards.team_id.label('team_id'),
+                Awards.user_id.label('user_id'),
+                Awards.value.label('value'),
+                Awards.date.label('date'),
+            ) \
+                .filter(Awards.account_id.in_(team_ids)) \
+                .filter(Awards.value > 0)  
+
+            awards = awards.union(awards_by_admin)
+
         freeze = get_config('freeze')
 
         if freeze:
