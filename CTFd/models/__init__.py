@@ -316,6 +316,20 @@ class Users(db.Model):
 
     def get_awards(self, admin=False):
         awards = Awards.query.filter_by(user_id=self.id)
+        if self.get_hints():
+            hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
+            awards = db.session.query(
+                Awards
+            ) \
+                .join(Hints, Awards.name == hints_name) \
+                .join(Solves, (Awards.user_id == Solves.user_id) & (Hints.challenge_id == Solves.challenge_id)) \
+                .filter(Awards.user_id == self.id)
+            awards_by_admin = db.session.query(
+                Awards
+            ) \
+                .filter(Awards.user_id == self.id) \
+                .filter(Awards.value > 0)
+            awards = awards.union(awards_by_admin)   
         freeze = get_config('freeze')
         if freeze and admin is False:
             dt = datetime.datetime.utcfromtimestamp(freeze)
@@ -334,6 +348,22 @@ class Users(db.Model):
 
         award_score = db.func.sum(Awards.value).label('award_score')
         award = db.session.query(award_score).filter_by(user_id=self.id)
+        if self.get_hints():
+            hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
+            award = db.session.query(
+                Awards.user_id,
+                award_score
+            ) \
+                .join(Hints, Awards.name == hints_name) \
+                .join(Solves, (Awards.user_id == Solves.user_id) & (Hints.challenge_id == Solves.challenge_id)) \
+                .filter(Awards.user_id == self.id)
+            awards_by_admin = db.session.query(
+                Awards.user_id,
+                award_score
+            ) \
+                .filter(Awards.user_id == self.id) \
+                .filter(Awards.value > 0)            
+            award = award.union(awards_by_admin)
 
         if not admin:
             freeze = Configs.query.filter_by(key='freeze').first()
@@ -344,14 +374,20 @@ class Users(db.Model):
                 award = award.filter(Awards.date < freeze)
 
         user = user.group_by(Solves.user_id).first()
-        award = award.first()
+        awards = award.all()
 
-        if user and award:
-            return int(user.score or 0) + int(award.award_score or 0)
+        if user and awards:
+            sum_award = 0
+            for award in awards:
+                sum_award += int(award.award_score or 0)
+            return int(user.score or 0) + sum_award
         elif user:
             return int(user.score or 0)
         elif award:
-            return int(award.award_score or 0)
+            sum_award = 0
+            for award in awards:
+                sum_award += int(award.award_score or 0)            
+            return sum_award
         else:
             return 0
 
@@ -366,16 +402,39 @@ class Users(db.Model):
             Solves.user_id.label('user_id'),
             db.func.sum(Challenges.value).label('score'),
             db.func.max(Solves.id).label('id'),
-            db.func.max(Solves.date).label('date')
+            db.func.max(Solves.date).label('date'),
+            db.func.concat("0", "").cast(db.Integer).label('unlock_count')
         ).join(Challenges).filter(Challenges.value != 0).group_by(Solves.user_id)
 
         awards = db.session.query(
             Awards.user_id.label('user_id'),
             db.func.sum(Awards.value).label('score'),
             db.func.max(Awards.id).label('id'),
-            db.func.max(Awards.date).label('date')
-        ).filter(Awards.value != 0).group_by(Awards.user_id)
-
+            db.func.max(Awards.date).label('date'),
+            db.func.concat("0", "").cast(db.Integer).label('unlock_count')
+        ).filter(Awards.value != 0).group_by(Awards.user_id) 
+        if self.get_hints():
+            hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
+            awards = db.session.query(
+                Awards.user_id.label('user_id'),
+                db.func.sum(Awards.value).label('score'),
+                db.func.max(Awards.id).label('id'),
+                db.func.max(Awards.date).label('date'),
+                db.func.count(Awards.value < 0).label('unlock_count')
+            ) \
+                .join(Hints, Awards.name == hints_name) \
+                .join(Solves, (Awards.user_id == Solves.user_id) & (Hints.challenge_id == Solves.challenge_id)) \
+                .filter(Awards.value != 0).group_by(Awards.user_id)
+            awards_by_admin = db.session.query(
+                Awards.user_id.label('user_id'),
+                db.func.sum(Awards.value).label('score'),
+                db.func.max(Awards.id).label('id'),
+                db.func.max(Awards.date).label('date'),
+                db.func.concat("0", "").cast(db.Integer).label('unlock_count')
+            ) \
+                .filter(Awards.value > 0).group_by(Awards.user_id)
+            awards = awards.union(awards_by_admin)
+            
         if not admin:
             freeze = Configs.query.filter_by(key='freeze').first()
             if freeze and freeze.value:
@@ -390,7 +449,8 @@ class Users(db.Model):
             results.columns.user_id,
             db.func.sum(results.columns.score).label('score'),
             db.func.max(results.columns.id).label('id'),
-            db.func.max(results.columns.date).label('date')
+            db.func.max(results.columns.date).label('date'),
+            db.func.sum(results.columns.unlock_count).label('unlock_count'),
         ).group_by(results.columns.user_id).subquery()
 
         if admin:
@@ -398,14 +458,14 @@ class Users(db.Model):
                 Users.id.label('user_id'),
             ) \
                 .join(sumscores, Users.id == sumscores.columns.user_id) \
-                .order_by(sumscores.columns.score.desc(), sumscores.columns.id)
+                .order_by(sumscores.columns.score.desc(), sumscores.columns.unlock_count.asc(), sumscores.columns.date.asc(), sumscores.columns.id)
         else:
             standings_query = db.session.query(
                 Users.id.label('user_id'),
             ) \
                 .join(sumscores, Users.id == sumscores.columns.user_id) \
                 .filter(Users.banned == False, Users.hidden == False) \
-                .order_by(sumscores.columns.score.desc(), sumscores.columns.id)
+                .order_by(sumscores.columns.score.desc(), sumscores.columns.unlock_count.asc(), sumscores.columns.date.asc(), sumscores.columns.id)
 
         standings = standings_query.all()
 
@@ -420,6 +480,14 @@ class Users(db.Model):
         except ValueError:
             return 0
 
+    def get_hints(self):
+        hints_name_list =  db.session.query(
+            db.func.concat("Hint ", Hints.id).label("hints_name")
+        ).count()
+        if hints_name_list > 0:
+            return True
+        else:
+            return False
 
 class Admins(Users):
     __tablename__ = 'admins'
@@ -526,6 +594,22 @@ class Teams(db.Model):
         ).order_by(
             Awards.date.asc()
         )
+        if self.get_hints():
+            hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
+            awards = db.session.query(
+                Awards
+            ) \
+                .join(Hints, Awards.name == hints_name) \
+                .join(Solves, (Awards.user_id == Solves.user_id) & (Hints.challenge_id == Solves.challenge_id)) \
+                .filter(Awards.user_id.in_(member_ids)) \
+                .order_by(Awards.date.asc()) 
+            awards_by_admin = db.session.query(
+                Awards
+            ) \
+                .filter(Awards.user_id.in_(member_ids)) \
+                .filter(Awards.value > 0) \
+                .order_by(Awards.date.asc())
+            awards = awards.union(awards_by_admin)   
 
         freeze = get_config('freeze')
         if freeze and admin is False:
@@ -551,15 +635,38 @@ class Teams(db.Model):
             Solves.team_id.label('team_id'),
             db.func.sum(Challenges.value).label('score'),
             db.func.max(Solves.id).label('id'),
-            db.func.max(Solves.date).label('date')
+            db.func.max(Solves.date).label('date'),
+            db.func.concat("0", "").cast(db.Integer).label('unlock_count')
         ).join(Challenges).filter(Challenges.value != 0).group_by(Solves.team_id)
 
         awards = db.session.query(
             Awards.team_id.label('team_id'),
             db.func.sum(Awards.value).label('score'),
             db.func.max(Awards.id).label('id'),
-            db.func.max(Awards.date).label('date')
-        ).filter(Awards.value != 0).group_by(Awards.team_id)
+            db.func.max(Awards.date).label('date'),
+            db.func.concat("0", "").cast(db.Integer).label('unlock_count')
+        ).filter(Awards.value != 0).group_by(Awards.team_id)        
+        if self.get_hints():
+            hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
+            awards = db.session.query(
+                Awards.team_id.label('team_id'),
+                db.func.sum(Awards.value).label('score'),
+                db.func.max(Awards.id).label('id'),
+                db.func.max(Awards.date).label('date'),
+                db.func.count(Awards.value < 0).label('unlock_count')
+            ) \
+                .join(Hints, Awards.name == hints_name) \
+                .join(Solves, (Awards.user_id == Solves.user_id) & (Hints.challenge_id == Solves.challenge_id)) \
+                .filter(Awards.value != 0).group_by(Awards.team_id)
+            awards_by_admin = db.session.query(
+                Awards.team_id.label('team_id'),
+                db.func.sum(Awards.value).label('score'),
+                db.func.max(Awards.id).label('id'),
+                db.func.max(Awards.date).label('date'),
+                db.func.concat("0", "").cast(db.Integer).label('unlock_count')
+            ) \
+                .filter(Awards.value > 0).group_by(Awards.team_id)
+            awards = awards.union(awards_by_admin)
 
         if not admin:
             freeze = Configs.query.filter_by(key='freeze').first()
@@ -575,22 +682,24 @@ class Teams(db.Model):
             results.columns.team_id,
             db.func.sum(results.columns.score).label('score'),
             db.func.max(results.columns.id).label('id'),
-            db.func.max(results.columns.date).label('date')
+            db.func.max(results.columns.date).label('date'),
+            db.func.sum(results.columns.unlock_count).label('unlock_count'),
         ).group_by(results.columns.team_id).subquery()
+
 
         if admin:
             standings_query = db.session.query(
-                Teams.id.label('team_id'),
+                Teams.id.label('team_id'),          
             ) \
                 .join(sumscores, Teams.id == sumscores.columns.team_id) \
-                .order_by(sumscores.columns.score.desc(), sumscores.columns.id)
+                .order_by(sumscores.columns.score.desc(), sumscores.columns.unlock_count.asc(), sumscores.columns.date.asc(), sumscores.columns.id)
         else:
             standings_query = db.session.query(
                 Teams.id.label('team_id'),
             ) \
                 .join(sumscores, Teams.id == sumscores.columns.team_id) \
                 .filter(Teams.banned == False) \
-                .order_by(sumscores.columns.score.desc(), sumscores.columns.id)
+                .order_by(sumscores.columns.score.desc(), sumscores.columns.unlock_count.asc(), sumscores.columns.date.asc(), sumscores.columns.id)
 
         standings = standings_query.all()
 
@@ -601,6 +710,15 @@ class Teams(db.Model):
             return "%d%s" % (i, "tsnrhtdd"[(i / 10 % 10 != 1) * (k < 4) * k::4])
         except ValueError:
             return 0
+    
+    def get_hints(self):
+        hints_name_list =  db.session.query(
+            db.func.concat("Hint ", Hints.id).label("hints_name")
+        ).count()
+        if hints_name_list > 0:
+            return True
+        else:
+            return False
 
 
 class Submissions(db.Model):

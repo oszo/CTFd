@@ -1,6 +1,6 @@
 from flask_restplus import Namespace, Resource
 
-from CTFd.models import Solves, Awards, Teams
+from CTFd.models import Solves, Awards, Teams, db, Hints
 from CTFd.cache import cache, make_cache_key
 from CTFd.utils.scores import get_standings
 from CTFd.utils import get_config
@@ -73,6 +73,34 @@ class ScoreboardDetail(Resource):
 
         solves = Solves.query.filter(Solves.account_id.in_(team_ids))
         awards = Awards.query.filter(Awards.account_id.in_(team_ids))
+        hints_name_list =  db.session.query(
+            db.func.concat("Hint ", Hints.id).label("hints_name")
+        ).count()
+        if hints_name_list > 0:
+            hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
+            awards = db.session.query(
+                Awards.account_id.label('account_id'),
+                Awards.team_id.label('team_id'),
+                Awards.user_id.label('user_id'),
+                Awards.value.label('value'),
+                Awards.date.label('date'),
+            ) \
+                .join(Hints, Awards.name == hints_name) \
+                .join(Solves, (Awards.account_id == Solves.account_id) & (Hints.challenge_id == Solves.challenge_id)) \
+                .filter(Awards.value != 0) \
+                .filter(Awards.account_id.in_(team_ids))
+
+            awards_by_admin = db.session.query(
+                Awards.account_id.label('account_id'),
+                Awards.team_id.label('team_id'),
+                Awards.user_id.label('user_id'),
+                Awards.value.label('value'),
+                Awards.date.label('date'),
+            ) \
+                .filter(Awards.account_id.in_(team_ids)) \
+                .filter(Awards.value > 0)  
+
+            awards = awards.union(awards_by_admin)
 
         freeze = get_config('freeze')
 

@@ -1,7 +1,7 @@
 from sqlalchemy.sql.expression import union_all
 
 from CTFd.cache import cache
-from CTFd.models import db, Solves, Awards, Challenges
+from CTFd.models import db, Solves, Awards, Challenges, Hints
 from CTFd.utils.dates import unix_time_to_utc
 from CTFd.utils import get_config
 from CTFd.utils.modes import get_model
@@ -23,7 +23,8 @@ def get_standings(count=None, admin=False):
         Solves.account_id.label('account_id'),
         db.func.sum(Challenges.value).label('score'),
         db.func.max(Solves.id).label('id'),
-        db.func.max(Solves.date).label('date')
+        db.func.max(Solves.date).label('date'),
+        db.func.concat("0", "").cast(db.Integer).label('unlock_count')
     ).join(Challenges) \
         .filter(Challenges.value != 0) \
         .group_by(Solves.account_id)
@@ -32,10 +33,38 @@ def get_standings(count=None, admin=False):
         Awards.account_id.label('account_id'),
         db.func.sum(Awards.value).label('score'),
         db.func.max(Awards.id).label('id'),
-        db.func.max(Awards.date).label('date')
+        db.func.max(Awards.date).label('date'),
+        db.func.concat("0", "").cast(db.Integer).label('unlock_count')
     ) \
         .filter(Awards.value != 0) \
         .group_by(Awards.account_id)
+    hints_name_list =  db.session.query(
+        db.func.concat("Hint ", Hints.id).label("hints_name")
+    ).count()
+    if hints_name_list > 0:
+        hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
+        awards = db.session.query(
+            Awards.account_id.label('account_id'),
+            db.func.sum(Awards.value).label('score'),
+            db.func.max(Awards.id).label('id'),
+            db.func.max(Awards.date).label('date'),
+            db.func.count(Awards.value < 0).label('unlock_count')
+        ) \
+            .join(Hints, Awards.name == hints_name) \
+            .join(Solves, (Awards.account_id == Solves.account_id) & (Hints.challenge_id == Solves.challenge_id)) \
+            .filter(Awards.value != 0) \
+            .group_by(Awards.account_id)
+        awards_by_admin = db.session.query(
+            Awards.account_id.label('account_id'),
+            db.func.sum(Awards.value).label('score'),
+            db.func.max(Awards.id).label('id'),
+            db.func.max(Awards.date).label('date'),
+            db.func.concat("0", "").cast(db.Integer).label('unlock_count')
+        ) \
+            .filter(Awards.value > 0) \
+            .group_by(Awards.account_id)
+
+        awards = awards.union(awards_by_admin)
 
     """
     Filter out solves and awards that are before a specific time point.
@@ -49,7 +78,6 @@ def get_standings(count=None, admin=False):
     Combine awards and solves with a union. They should have the same amount of columns
     """
     results = union_all(scores, awards).alias('results')
-
     """
     Sum each of the results by the team id to get their score.
     """
@@ -57,7 +85,8 @@ def get_standings(count=None, admin=False):
         results.columns.account_id,
         db.func.sum(results.columns.score).label('score'),
         db.func.max(results.columns.id).label('id'),
-        db.func.max(results.columns.date).label('date')
+        db.func.max(results.columns.date).label('date'),
+        db.func.max(results.columns.unlock_count).label('unlock_count')
     ).group_by(results.columns.account_id) \
         .subquery()
 
@@ -79,7 +108,7 @@ def get_standings(count=None, admin=False):
             sumscores.columns.score
         ) \
             .join(sumscores, Model.id == sumscores.columns.account_id) \
-            .order_by(sumscores.columns.score.desc(), sumscores.columns.id)
+            .order_by(sumscores.columns.score.desc(), sumscores.columns.unlock_count.asc(), sumscores.columns.date.asc(), sumscores.columns.id)
     else:
         standings_query = db.session.query(
             Model.id.label('account_id'),
@@ -89,7 +118,7 @@ def get_standings(count=None, admin=False):
         ) \
             .join(sumscores, Model.id == sumscores.columns.account_id) \
             .filter(Model.banned == False, Model.hidden == False) \
-            .order_by(sumscores.columns.score.desc(), sumscores.columns.id)
+            .order_by(sumscores.columns.score.desc(), sumscores.columns.unlock_count.asc(), sumscores.columns.date.asc(), sumscores.columns.id)
 
     """
     Only select a certain amount of users if asked.

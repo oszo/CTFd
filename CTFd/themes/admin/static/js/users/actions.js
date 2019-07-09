@@ -33,6 +33,7 @@ $(document).ready(function () {
         e.preventDefault();
         var params = $('#user-award-form').serializeJSON(true);
         params['user_id'] = USER_ID;
+        params['team_id'] = TEAM_ID;
         CTFd.fetch('/api/v1/awards', {
             method: 'POST',
             credentials: 'same-origin',
