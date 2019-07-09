@@ -78,8 +78,6 @@ def get_standings(count=None, admin=False):
     Combine awards and solves with a union. They should have the same amount of columns
     """
     results = union_all(scores, awards).alias('results')
-    print("results>>>")
-    print(results)
     """
     Sum each of the results by the team id to get their score.
     """
