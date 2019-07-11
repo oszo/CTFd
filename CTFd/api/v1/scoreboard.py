@@ -34,7 +34,8 @@ class ScoreboardList(Resource):
                 'account_id': x.account_id,
                 'oauth_id': x.oauth_id,
                 'name': x.name,
-                'score': int(x.score)
+                'score': int(x.score),
+                'solve': int(x.solve)
             }
 
             if mode == TEAMS_MODE:

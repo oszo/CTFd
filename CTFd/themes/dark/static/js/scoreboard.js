@@ -1,16 +1,34 @@
+function truncatedstring (fullstr, len) {
+    if(fullstr.length>len){
+        return fullstr.substring(0, len-3) + "...";
+    }else{
+        return fullstr;
+    }
+}
+
+var scorebard_data = [];
+var challenges_count = 0;
 function updatescores () {
     $.get(script_root + '/api/v1/scoreboard', function (response) {
         var teams = response.data;
-        var table = $('#scoreboard tbody');
-        table.empty();
-        for (var i = 0; i < teams.length; i++) {
-            var row = "<tr>\n" +
-                "<th scope=\"row\" class=\"text-center\">{0}</th>".format(i + 1) +
-                "<td><a href=\"{0}/teams/{1}\">{2}</a></td>".format(script_root, teams[i].account_id, htmlentities(teams[i].name)) +
-                "<td>{0}</td>".format(teams[i].score) +
-                "</tr>";
-            table.append(row);
-        }
+        $.get(script_root + "/api/v1/challenges/allcount", function (response) {
+            var allcount = response.data;
+            if (scorebard_data != teams | challenges_count != allcount){
+                scorebard_data = teams;
+                challenges_count = allcount;
+                var table = $('#scoreboard tbody');
+                table.empty();
+                for (var i = 0; i < teams.length; i++) {
+                    var row = "<tr>\n" +
+                        "<th scope=\"row\" class=\"text-center\">{0}</th>".format(i + 1) +
+                        "<td><a href=\"{0}/teams/{1}\">{2}</a></td>".format(script_root, teams[i].account_id, htmlentities(truncatedstring(teams[i].name, 35))) +
+                        "<td><div class=\"progress\" style=\"height: 20px;\"><div id=\"score-progress-bar\" class=\"progress-bar bg-primary\" role=\"progressbar\" style=\"width: {0}%; -webkit-transition: width 2s; transition: width 2s;\" aria-valuenow=\"{0}\" aria-valuemin=\"0\" aria-valuemax=\"100\">{0}%</div></div></td>".format((teams[i].solve*100/allcount).toFixed(2)) +
+                        "<td>{0}</td>".format(teams[i].score) +
+                        "</tr>";
+                    table.append(row);
+                }
+            }
+        });
     });
 }
 
@@ -116,6 +134,7 @@ function update(){
 }
 
 setInterval(update, 15000); // Update scores every 15 sec
+setTimeout(update, 1000); // Initial scores
 scoregraph();
 
 window.onresize = function () {
