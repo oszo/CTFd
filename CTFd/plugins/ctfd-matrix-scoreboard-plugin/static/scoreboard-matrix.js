@@ -1,12 +1,24 @@
 function updatescores () {
     $.get(script_root + '/scores', function( data ) {
         teams = $.parseJSON(JSON.stringify(data));
-        $('#scoreboard > tbody').empty()
+        $('#scoreboard > tbody').empty();
         for (var i = 0; i < teams['standings'].length; i++) {
             row = "<tr><td>{0}</td><td><a href='/admin/teams/{1}'>{2}</a></td><td>{3}</td>".format(i+1, teams['standings'][i].id, htmlentities(teams['standings'][i].team), teams['standings'][i].score);
             for (var j = 0; j < challenges.length; j++) {
                 if (teams['standings'][i].solves.indexOf(challenges[j].id) != -1) {
-                    row += '<td class="chalmark">' + challenges[j].value + '</td>';
+                    var awards_exist = false;
+                    var award_score = 0;
+                    for (var awards_index =0; awards_index <teams['standings'][i].awards.length; awards_index++){
+                        if (teams['standings'][i].awards[awards_index].challenge_id == challenges[j].id){
+                            awards_exist = true;
+                            award_score = teams['standings'][i].awards[awards_index].award_score;
+                        }
+                    }
+                    if (awards_exist) {
+                        row += '<td class="chalmark">' + (challenges[j].value + award_score) + '</td>';
+                    } else {
+                        row += '<td class="chalmark">' + challenges[j].value + '</td>';
+                    }
                 } else {
                     row += '<td class="chalmark"></td>';
                 }
@@ -35,7 +47,8 @@ function update(){
     updatescores();
 }
 
-setInterval(update, 30000); // Update scores every 30 Sec
+setInterval(update, 15000); // Update scores every 30 Sec
+update();
 
 
 

@@ -90,14 +90,9 @@ th.chalname {
         </thead>
         <tbody>
         {% for team in teams %}
-            <tr><td>{{ loop.index }}</td><td><a href="{{ request.script_root }}/admin/teams/{{ team.teamid }}">{{ team.name }}</a></td><td>{{ team.score }}</td>
+            <tr><td>{{ loop.index }}</td><td><a href="{{ request.script_root }}/team/{{ team.teamid }}">{{ team.name }}</a></td><td>{{ team.score }}</td>
                 {% for chal in challenges %}
                     <td class="chalmark">
-                    {% if chal.id in team.solves %}
-                    {{ chal.value }}
-                    {% else %}
-
-                    {% endif %}
                     </td>
                 {% endfor %}
 
