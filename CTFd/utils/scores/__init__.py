@@ -24,7 +24,8 @@ def get_standings(count=None, admin=False):
         db.func.sum(Challenges.value).label('score'),
         db.func.max(Solves.id).label('id'),
         db.func.max(Solves.date).label('date'),
-        db.func.concat("0", "").cast(db.Integer).label('unlock_count')
+        db.func.concat("0", "").cast(db.Integer).label('unlock_count'),
+        db.func.count(Solves.id).label('solve'),
     ).join(Challenges) \
         .filter(Challenges.value != 0) \
         .group_by(Solves.account_id)
@@ -48,12 +49,26 @@ def get_standings(count=None, admin=False):
             db.func.sum(Awards.value).label('score'),
             db.func.max(Awards.id).label('id'),
             db.func.max(Awards.date).label('date'),
-            db.func.count(Awards.value < 0).label('unlock_count')
+            db.func.count(Awards.value < 0).label('unlock_count'),
+            db.func.concat("0", "").cast(db.Integer).label('solve')
         ) \
             .join(Hints, Awards.name == hints_name) \
             .join(Solves, (Awards.account_id == Solves.account_id) & (Hints.challenge_id == Solves.challenge_id)) \
             .filter(Awards.value != 0) \
             .group_by(Awards.account_id)
+        awards_by_admin = db.session.query(
+            Awards.account_id.label('account_id'),
+            db.func.sum(Awards.value).label('score'),
+            db.func.max(Awards.id).label('id'),
+            db.func.max(Awards.date).label('date'),
+            db.func.concat("0", "").cast(db.Integer).label('unlock_count'),
+            db.func.concat("0", "").cast(db.Integer).label('solve')
+        ) \
+            .filter(Awards.value > 0) \
+            .group_by(Awards.account_id)
+
+        awards = awards.union(awards_by_admin)
+
     """
     Filter out solves and awards that are before a specific time point.
     """
@@ -66,7 +81,6 @@ def get_standings(count=None, admin=False):
     Combine awards and solves with a union. They should have the same amount of columns
     """
     results = union_all(scores, awards).alias('results')
-
     """
     Sum each of the results by the team id to get their score.
     """
@@ -75,7 +89,8 @@ def get_standings(count=None, admin=False):
         db.func.sum(results.columns.score).label('score'),
         db.func.max(results.columns.id).label('id'),
         db.func.max(results.columns.date).label('date'),
-        db.func.max(results.columns.unlock_count).label('unlock_count')
+        db.func.max(results.columns.unlock_count).label('unlock_count'),
+        db.func.sum(results.columns.solve).label('solve'),
     ).group_by(results.columns.account_id) \
         .subquery()
 
@@ -103,7 +118,8 @@ def get_standings(count=None, admin=False):
             Model.id.label('account_id'),
             Model.oauth_id.label('oauth_id'),
             Model.name.label('name'),
-            sumscores.columns.score
+            sumscores.columns.score,
+            sumscores.columns.solve,
         ) \
             .join(sumscores, Model.id == sumscores.columns.account_id) \
             .filter(Model.banned == False, Model.hidden == False) \
