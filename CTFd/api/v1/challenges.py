@@ -670,3 +670,18 @@ class ChallengeFlags(Resource):
             'success': True,
             'data': response.data
         }
+
+
+@challenges_namespace.route('/allcount')
+class ChallengeFlags(Resource):
+    def get(self):
+        challenges = Challenges.query.filter(
+            and_(Challenges.state != 'hidden', Challenges.state != 'locked')
+        ).order_by(Challenges.value).all()        
+
+        response = len(challenges)
+
+        return {
+            'success': True,
+            'data': response
+        }

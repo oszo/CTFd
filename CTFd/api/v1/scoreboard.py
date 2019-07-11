@@ -34,7 +34,8 @@ class ScoreboardList(Resource):
                 'account_id': x.account_id,
                 'oauth_id': x.oauth_id,
                 'name': x.name,
-                'score': int(x.score)
+                'score': int(x.score),
+                'solve': int(x.solve)
             }
 
             if mode == TEAMS_MODE:
@@ -89,6 +90,18 @@ class ScoreboardDetail(Resource):
                 .join(Solves, (Awards.account_id == Solves.account_id) & (Hints.challenge_id == Solves.challenge_id)) \
                 .filter(Awards.value != 0) \
                 .filter(Awards.account_id.in_(team_ids))
+
+            awards_by_admin = db.session.query(
+                Awards.account_id.label('account_id'),
+                Awards.team_id.label('team_id'),
+                Awards.user_id.label('user_id'),
+                Awards.value.label('value'),
+                Awards.date.label('date'),
+            ) \
+                .filter(Awards.account_id.in_(team_ids)) \
+                .filter(Awards.value > 0)  
+
+            awards = awards.union(awards_by_admin)
 
         freeze = get_config('freeze')
 
