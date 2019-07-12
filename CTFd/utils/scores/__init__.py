@@ -35,7 +35,8 @@ def get_standings(count=None, admin=False):
         db.func.sum(Awards.value).label('score'),
         db.func.max(Awards.id).label('id'),
         db.func.max(Awards.date).label('date'),
-        db.func.concat("0", "").cast(db.Integer).label('unlock_count')
+        db.func.concat("0", "").cast(db.Integer).label('unlock_count'),
+        db.func.concat("0", "").cast(db.Integer).label('solve')
     ) \
         .filter(Awards.value != 0) \
         .group_by(Awards.account_id)
