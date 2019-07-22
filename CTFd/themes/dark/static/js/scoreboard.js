@@ -115,7 +115,7 @@ function updatescores () {
                         for (var i = 0; i < teams.length; i++) {
                             var row = "<tr>\n" +
                                 "<th scope=\"row\" class=\"text-center\">{0}</th>".format(i + 1) +
-                                "<td id=\"account{0}-team\"><a href=\"{1}/teams/{2}\">{3}</a></td>".format(teams[i].account_id, script_root, teams[i].account_id, htmlentities(truncatedstring(teams[i].name, 35))) +
+                                "<td id=\"account{0}-team\"><a href=\"{1}/{2}/{3}\">{4}</a></td>".format(teams[i].account_id, script_root, user_mode, teams[i].account_id, htmlentities(truncatedstring(teams[i].name, 35))) +
                                 "<td id=\"account{0}-solve\"><div class=\"progress\" style=\"height: 20px;\"><div id=\"score-progress-bar\" class=\"progress-bar bg-primary\" role=\"progressbar\" style=\"width: {1}%; -webkit-transition: width 2s; transition: width 2s;\" aria-valuenow=\"{1}\" aria-valuemin=\"0\" aria-valuemax=\"100\">{1}%</div></div></td>".format(teams[i].account_id, renderpercentwodigit(teams[i].solve, allcount)) +
                                 "<td id=\"account{0}-score\" class=\"text-right\">{1}</td>".format(teams[i].account_id, teams[i].score) +
                                 "<td id=\"account{0}-state\" class=\"text-center\">{1}</td>".format(teams[i].account_id, renderposition(teams[i].account_id)) +
@@ -216,6 +216,9 @@ function scoregraph () {
                 color : '#fff'
             }
         };
+        if (user_mode === 'users'){
+            layout.title = 'Top 10 Users';
+        }
 
         $('#score-graph').empty(); // Remove spinners
         document.getElementById('score-graph').fn = 'CTFd_scoreboard_' + (new Date).toISOString().slice(0,19);

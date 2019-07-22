@@ -13,7 +13,15 @@
 				<thead>
 					<tr>
 						<td width="10px"><b>Place</b></td>
-						<td><b>Team</b></td>
+						<td>
+							<b>
+								{% if get_config('user_mode') == 'teams' %}
+									Team
+								{% elif get_config('user_mode') == 'users' %}
+									User
+								{% endif %}								
+							</b>
+						</td>
 						<td><b>Score</b></td>
 						<td><b>Visibility</b></td>
 					</tr>

@@ -18,7 +18,15 @@
 				<thead>
 					<tr>
 						<td class="text-center"><b>ID</b></td>
-						<td><b>Team</b></td>
+						<td>
+							<b>
+								{% if get_config('user_mode') == 'teams' %}
+									Team
+								{% elif get_config('user_mode') == 'users' %}
+									User
+								{% endif %}
+							</b>
+						</td>
 						<td><b>Challenge</b></td>
 						<td><b>Type</b></td>
 						<td><b>Submission</b></td>

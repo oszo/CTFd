@@ -51,7 +51,15 @@
 					<thead>
 						<tr>
 							<td scope="col" class="text-center" width="10%"><b>Place</b></td>
-							<td scope="col" width="30%"><b>Team</b></td>
+							<td scope="col" width="30%">
+								<b>
+									{% if get_config('user_mode') == 'teams' %}
+										Team
+									{% elif get_config('user_mode') == 'users' %}
+										User
+									{% endif %}
+								</b>
+							</td>
 							<td scope="col" width="48%"><b>Solve</b></td>
 							<td scope="col" class="text-right" width="7%"><b>Score</b></td>
 							<td scope="col" class="text-center" width="5%"><b></b></td>
