@@ -148,7 +148,8 @@ class ScoreboardDetail(Resource):
         }
 
 
-
+# Add API to get score and solved count by category
+# count, score and position are included
 @scoreboard_namespace.route('/StatByCat/<cat>')
 @scoreboard_namespace.param('cat', 'Category')
 class ScoreboardByCategory(Resource):
@@ -200,7 +201,8 @@ class ScoreboardByCategory(Resource):
             'data': response
         }
 
-
+# Add API to get score and solved count for all category
+# count, score and position are included
 @scoreboard_namespace.route('/StatByCat/all')
 class ScoreboardByCategory(Resource):
     @check_account_visibility
