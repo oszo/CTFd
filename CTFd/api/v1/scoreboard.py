@@ -1,12 +1,14 @@
 from flask_restplus import Namespace, Resource
 
-from CTFd.models import Solves, Awards, Teams, db, Hints
+from CTFd.models import Solves, Awards, Teams, db, Hints, Challenges
 from CTFd.cache import cache, make_cache_key
 from CTFd.utils.scores import get_standings
 from CTFd.utils import get_config
 from CTFd.utils.modes import TEAMS_MODE
 from CTFd.utils.dates import unix_time_to_utc, isoformat
 from CTFd.utils.decorators.visibility import check_account_visibility, check_score_visibility
+from sqlalchemy.sql import and_
+
 
 scoreboard_namespace = Namespace('scoreboard', description="Endpoint to retrieve scores")
 
@@ -144,3 +146,110 @@ class ScoreboardDetail(Resource):
             'success': True,
             'data': response
         }
+
+
+
+@scoreboard_namespace.route('/StatByCat/<cat>')
+@scoreboard_namespace.param('cat', 'Category')
+class ScoreboardByCategory(Resource):
+    @check_account_visibility
+    @check_score_visibility
+    #@cache.cached(timeout=60, key_prefix=make_cache_key)
+    def get(self, cat):
+        response = []
+
+        #standings = get_standings(count=count)
+        standings = get_standings()
+
+        team_ids = [team.account_id for team in standings]
+
+
+        solves = Solves.query.filter(Solves.account_id.in_(team_ids))
+
+        solves = solves.all()
+
+        for i, team in enumerate(team_ids):
+
+            entry = {
+                'account_id': standings[i].account_id,
+                'name': standings[i].name,
+                'score': 0,
+                'solve': 0
+            }
+            
+            for solve in solves:
+                
+                if solve.account_id == team:
+                    challenges = Challenges.query.filter(
+                            and_(Challenges.state != 'hidden', Challenges.state != 'locked', Challenges.id == solve.challenge_id)
+                        ).first()
+                    
+                    if challenges.category == cat:
+                        entry['solve'] = entry['solve'] + 1
+                        entry['score'] = entry['score'] + challenges.value
+            response.append(entry)
+            
+        response = sorted(response, key = lambda i: i['score'], reverse=True)
+        count = 0
+        for r in response:
+            r['pos'] = count + 1
+        
+
+        return {
+            'success': True,
+            'data': response
+        }
+
+
+@scoreboard_namespace.route('/StatByCat/all')
+class ScoreboardByCategory(Resource):
+    @check_account_visibility
+    @check_score_visibility
+    #@cache.cached(timeout=60, key_prefix=make_cache_key)
+    def get(self):
+        response = []
+
+        #standings = get_standings(count=count)
+        standings = get_standings()
+
+        team_ids = [team.account_id for team in standings]
+
+
+        solves = Solves.query.filter(Solves.account_id.in_(team_ids))
+
+        solves = solves.all()
+
+        for i, team in enumerate(team_ids):
+
+            entry = {
+                'account_id': standings[i].account_id,
+                'name': standings[i].name,
+                'score': 0,
+                'solve': 0
+            }
+            
+            for solve in solves:
+                
+                if solve.account_id == team:
+                    challenges = Challenges.query.filter(
+                            and_(Challenges.state != 'hidden', Challenges.state != 'locked', Challenges.id == solve.challenge_id)
+                        ).first()
+                    #category[challenges.category] = category[challenges.category] + 1
+                    #if challenges.category == cat:
+                    entry['solve'] = entry['solve'] + 1
+                    entry['score'] = entry['score'] + challenges.value
+                    
+            response.append(entry)
+            
+        response = sorted(response, key = lambda i: i['score'], reverse=True)
+        count = 0
+        for r in response:
+            r['pos'] = count + 1
+        
+
+        return {
+            'success': True,
+            'data': response
+        }
+
+    
