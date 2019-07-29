@@ -158,6 +158,56 @@ class ChallengeList(Resource):
         }
 
 
+
+@challenges_namespace.route('/category')
+class ChallengeList(Resource):
+    @check_challenge_visibility
+    @during_ctf_time_only
+    @require_verified_emails
+    def get(self):
+        # This can return None (unauth) if visibility is set to public
+        user = get_current_user()
+
+        challenges = Challenges.query.filter(
+            and_(Challenges.state != 'hidden', Challenges.state != 'locked')
+        ).order_by(Challenges.value).all()
+
+        if user:
+            solve_ids = Solves.query\
+                .with_entities(Solves.challenge_id)\
+                .filter_by(account_id=user.account_id)\
+                .order_by(Solves.challenge_id.asc())\
+                .all()
+            solve_ids = set([value for value, in solve_ids])
+
+            # TODO: Convert this into a re-useable decorator
+            if config.is_teams_mode() and get_current_team() is None:
+                abort(403)
+        else:
+            solve_ids = set()
+
+
+        cat = []
+        response = []
+        #tag_schema = TagSchema(view='user', many=True)
+        for challenge in challenges:
+            
+            response.append({
+                'id': challenge.id,
+                'name': challenge.name,
+                'category': challenge.category,
+            })
+
+        db.session.close()
+        return {
+            'success': True,
+            'data': response
+        }
+    
+    
+
+
+
 @challenges_namespace.route('/types')
 class ChallengeTypes(Resource):
     @admins_only
@@ -681,6 +731,30 @@ class ChallengeFlags(Resource):
 
         response = len(challenges)
 
+        return {
+            'success': True,
+            'data': response
+        }
+
+
+@challenges_namespace.route('/allcat')
+class ChallengeFlags(Resource):
+    def get(self):
+        response = []
+        challenges = Challenges.query.filter(
+            and_(Challenges.state != 'hidden', Challenges.state != 'locked')
+        ).order_by(Challenges.value).all()        
+
+        allcat = {}
+        category = {}
+        for chal in challenges:
+            cat_name = chal.category
+            if cat_name not in category:
+                category[cat_name] = 1
+            else:
+                category[cat_name] = category[cat_name] + 1 
+        #response = category
+        response.append(category)
         return {
             'success': True,
             'data': response
