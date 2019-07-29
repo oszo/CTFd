@@ -329,14 +329,22 @@ function scoregraph () {
 
 function update(){
   updatescores();
-    // an API "/api/v1/challenge/allcat" is available to list all available categories and the number of all puzzles in each category
-    // call function to update score bar by category
-    updatescoresbycat("web", 2);
-    updatescoresbycat("bin", 2);
-    
+  count = 0;
+  // Get all available categories and loop to update score bar for each category
+  $.get(script_root + '/api/v1/challenges/allcat', function (response) {
+        var teams = response.data;
+        for (var key in teams[0]) {
+            // check if the property/key is defined in the object itself, not in parent
+            if (teams[0].hasOwnProperty(key)) {           
+                //console.log(key, teams[0][key]);
+                updatescoresbycat(key, teams[0][key]);
+            }
+        }
+        
+    });
+  
   scoregraph();
 }
-
 setInterval(update, 15000); // Update scores every 15 sec
 setTimeout(update, 1000); // Initial scores
 scoregraph();
