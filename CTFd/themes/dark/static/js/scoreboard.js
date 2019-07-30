@@ -6,9 +6,12 @@ function truncatedstring (fullstr, len) {
     }
 }
 
+function replaceSpacialChar(spacialstr){
+    return spacialstr.replace(/[^a-zA-Z]/g, "_");
+}
+
 var scorebard_data = [];
 var position = [];
-var challenges_count = 0;
 
 function renderpercentwodigit(value, base){
     if (((value * 100) % base) === 0){
@@ -18,21 +21,39 @@ function renderpercentwodigit(value, base){
     }
 }
 
-function renderposition(account_id) {
-    for (var i = 0; i < position.length; i++) {
-        if (position[i].account_id === account_id && position[i].state === "up"){
-            console.log(account_id + ", " + position[i].name + " : show up");
+function renderposition(account_id, cat) {
+    for (var i = 0; i < position[cat].length; i++) {
+        if (position[cat][i].account_id === account_id && position[cat][i].state === "up"){
             return "<i class=\"fas fa-angle-up text-success\"></i>";
-        }else if (position[i].account_id === account_id && position[i].state === "down"){
-            console.log(account_id + ", " + position[i].name + " : show down");
+        }else if (position[cat][i].account_id === account_id && position[cat][i].state === "down"){
             return "<i class=\"fas fa-angle-down text-danger\"></i>";
         }
     }
     return "";
 }
 
+function rendernavtab(){
+    count = 0;
+    // Get all available categories and loop to update score bar for each category
+    $.get(script_root + '/api/v1/challenges/allcat', function (response) {
+        var challenge_cats = response.data;
+        var navtab = "<li class=\"nav-item\"><a class=\"nav-link active\" id=\"nav-tab-all\" data-toggle=\"tab\" href=\"#tab-all\" role=\"tab\">Total score</a></li>";
+        var tabcontent = "";
+        for (var key in challenge_cats[0]) {
+            var key_id = replaceSpacialChar(key);
+            navtab += "<li class=\"nav-item\"><a class=\"nav-link\" id=\"nav-tab-{0}\" data-toggle=\"tab\" href=\"#tab-{0}\" role=\"tab\">{1}</a></li>".format(key_id, key);
+            tabcontent += "<div class=\"tab-pane fade\" id=\"tab-{0}\" role=\"tabpanel\" >						<table class=\"table table-striped\"><thead><tr><td scope=\"col\" class=\"text-center\" width=\"10%\"><b>Place</b></td><td scope=\"col\" width=\"30%\"><b>{1}</b></td><td scope=\"col\" width=\"48%\"><b>Solve</b><small> (Percent of total challenge)</small></small></td><td scope=\"col\" class=\"text-right\" width=\"7%\"><b>Score</b></td><td scope=\"col\" class=\"text-center\" width=\"5%\"><b></b></td></tr></thead><tbody></tbody></table></div>".format(key_id, (user_mode === "teams" ? "Team" : "User"));
+        }
+        $("#nav-tab").empty();
+        $("#nav-tab").append(navtab);
+        $("#tab-content").append(tabcontent);
+      });
+    
+    scoregraph();
+  }
+
 var firstime_updatescores = true;
-function updatescores () {
+function updatescoresbycat (cat, catcount) {
     var update_table_delay = 0;
     if (firstime_updatescores){
         firstime_updatescores = false;
@@ -40,191 +61,111 @@ function updatescores () {
         update_table_delay = 5000;
     }
 
-    for (var i = 0; i < position.length; i++) {
-        position[i].state = "stand";
+    var isCatInPosition = false;
+    for (var key in position) {
+        if (position.hasOwnProperty(cat)) {
+            isCatInPosition = true;
+        }
     }
-
-    $.get(script_root + '/api/v1/scoreboard', function (response) {
-        var teams = response.data;
-
-        $.get(script_root + "/api/v1/challenges/allcount", function (response) {
-            var allcount = response.data;
-
-            if ( JSON.stringify(scorebard_data) !== JSON.stringify(teams)){   
-                var update_table = false;
-                if (teams.length !== scorebard_data.length){
-                    update_table = true;
-                }
-
-                var new_position = [];
-                for (var i = 0; i < teams.length; i++) {
-                    var newteam = teams[i];
-                    newteam["state"] = "stand";
-                    new_position.push(newteam);
-                }
-                if(position.length !== 0){
-                    for (var i = 0; i < new_position.length; i++) {
-                        for (var j = 0; j < position.length; j++) {
-                            if (new_position[i].account_id === position[j].account_id){
-                                if (new_position[i].pos < position[j].pos){
-                                    new_position[i].state = "up";
-                                }else if(new_position[i].pos > position[j].pos){
-                                    new_position[i].state = "down";
-                                }else{
-                                    new_position[i].state = "stand";
-                                }
-                                update_table = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                position = new_position;
-                
-                for (var i = 0; i < teams.length; i++) {
-                    var team_id = teams[i].account_id;
-                    var team_name = htmlentities(truncatedstring(teams[i].name, 35));
-                    var team_solve = renderpercentwodigit(teams[i].solve, allcount)
-                    var team_score = teams[i].score;
-                    var team_state = renderposition(team_id);
-
-                    $("#account" + team_id + "-team a").text(team_name);
-                    $("#account" + team_id + "-solve div div").attr("style", "width: " + team_solve + "%; -webkit-transition: width 2s; transition: width 2s;");
-
-                    $("#account" + team_id + "-solve div div").attr("aria-valuenow", team_solve);
-                    var current_solve = $("#account" + team_id + "-solve div div").text();
-                    current_solve = current_solve.substring(0, current_solve.length-1);
-                    if (current_solve !== team_solve){
-                        $("#account" + team_id + "-solve div div").attr("class", "progress-bar bg-success progress-bar-striped progress-bar-animated");
-                        setTimeout(function(){
-                            $("#account" + team_id + "-solve div div").attr("class", "progress-bar bg-promary");
-                        }, 3000);
-                    }
-                    $("#account" + team_id + "-solve div div").text(team_solve + "%");
-                    $("#account" + team_id + "-score").text(team_score);
-                    $("#account" + team_id + "-state").empty();
-                    $("#account" + team_id + "-state").append(team_state);
-                }
-                
-                if (update_table){
-                    scorebard_data = teams;
-                    challenges_count = allcount;
-                    setTimeout(function(){
-                        var table = $('#scoreboard tbody');
-                        table.empty();
-                        for (var i = 0; i < teams.length; i++) {
-                            var row = "<tr>\n" +
-                                "<th scope=\"row\" class=\"text-center\">{0}</th>".format(i + 1) +
-                                "<td id=\"account{0}-team\"><a href=\"{1}/{2}/{3}\">{4}</a></td>".format(teams[i].account_id, script_root, user_mode, teams[i].account_id, htmlentities(truncatedstring(teams[i].name, 35))) +
-                                "<td id=\"account{0}-solve\"><div class=\"progress\" style=\"height: 20px;\"><div id=\"score-progress-bar\" class=\"progress-bar bg-primary\" role=\"progressbar\" style=\"width: {1}%; -webkit-transition: width 2s; transition: width 2s;\" aria-valuenow=\"{1}\" aria-valuemin=\"0\" aria-valuemax=\"100\">{1}%</div></div></td>".format(teams[i].account_id, renderpercentwodigit(teams[i].solve, allcount)) +
-                                "<td id=\"account{0}-score\" class=\"text-right\">{1}</td>".format(teams[i].account_id, teams[i].score) +
-                                "<td id=\"account{0}-state\" class=\"text-center\">{1}</td>".format(teams[i].account_id, renderposition(teams[i].account_id)) +
-                                "</tr>";
-                            table.append(row);
-                        }
-                    }, update_table_delay);
-                }
-
-            }
-        });
-    });
-}
-
-function updatescoresbycat (cat, allcount) {
-    var update_table_delay = 0;
-    if (firstime_updatescores){
-        firstime_updatescores = false;
-    } else {
-        update_table_delay = 5000;
+    if (!isCatInPosition){
+        position[cat]=[];
     }
-
-    for (var i = 0; i < position.length; i++) {
-        position[i].state = "stand";
+    for (var i = 0; i < position[cat].length; i++) {
+        position[cat][i].state = "stand";
     }
 
     $.get(script_root + '/api/v1/scoreboard/StatByCat/' + cat, function (response) {
         var teams = response.data;
-
-        //$.get(script_root + "/api/v1/challenges/allcount", function (response) {
-            //var allcount = response.data;
-
-            if ( JSON.stringify(scorebard_data) !== JSON.stringify(teams)){   
-                var update_table = false;
-                if (teams.length !== scorebard_data.length){
+        var update_table = false;
+        var isCatInScorebard_data = false;
+        for (var key in scorebard_data) {
+            if (key===cat) {
+                isCatInScorebard_data = true;
+            }
+        }
+        if (!isCatInScorebard_data){
+            scorebard_data[cat]=[];
+            update_table = true;
+        }
+        if ( JSON.stringify(scorebard_data[cat]) !== JSON.stringify(teams)){
+            if(isCatInScorebard_data){
+                if (teams.length !== scorebard_data[cat].length){
                     update_table = true;
                 }
-
-                var new_position = [];
-                for (var i = 0; i < teams.length; i++) {
-                    var newteam = teams[i];
-                    newteam["state"] = "stand";
-                    new_position.push(newteam);
-                }
-                if(position.length !== 0){
-                    for (var i = 0; i < new_position.length; i++) {
-                        for (var j = 0; j < position.length; j++) {
-                            if (new_position[i].account_id === position[j].account_id){
-                                if (new_position[i].pos < position[j].pos){
-                                    new_position[i].state = "up";
-                                }else if(new_position[i].pos > position[j].pos){
-                                    new_position[i].state = "down";
-                                }else{
-                                    new_position[i].state = "stand";
-                                }
-                                update_table = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                position = new_position;
-                
-                for (var i = 0; i < teams.length; i++) {
-                    var team_id = teams[i].account_id;
-                    var team_name = htmlentities(truncatedstring(teams[i].name, 35));
-                    var team_solve = renderpercentwodigit(teams[i].solve, allcount)
-                    var team_score = teams[i].score;
-                    var team_state = renderposition(team_id);
-
-                    $("#account" + team_id + "-team a").text(team_name);
-                    $("#account" + team_id + "-solve div div").attr("style", "width: " + team_solve + "%; -webkit-transition: width 2s; transition: width 2s;");
-
-                    $("#account" + team_id + "-solve div div").attr("aria-valuenow", team_solve);
-                    var current_solve = $("#account" + team_id + "-solve div div").text();
-                    current_solve = current_solve.substring(0, current_solve.length-1);
-                    if (current_solve !== team_solve){
-                        $("#account" + team_id + "-solve div div").attr("class", "progress-bar bg-success progress-bar-striped progress-bar-animated");
-                        setTimeout(function(){
-                            $("#account" + team_id + "-solve div div").attr("class", "progress-bar bg-promary");
-                        }, 3000);
-                    }
-                    $("#account" + team_id + "-solve div div").text(team_solve + "%");
-                    $("#account" + team_id + "-score").text(team_score);
-                    $("#account" + team_id + "-state").empty();
-                    $("#account" + team_id + "-state").append(team_state);
-                }
-                
-                if (update_table){
-                    scorebard_data = teams;
-                    //challenges_count = allcount;
-                    setTimeout(function(){
-                        var table = $('#scoreboard tbody');
-                        table.empty();
-                        for (var i = 0; i < teams.length; i++) {
-                            var row = "<tr>\n" +
-                                "<th scope=\"row\" class=\"text-center\">{0}</th>".format(i + 1) +
-                                "<td id=\"account{0}-team\"><a href=\"{1}/{2}/{3}\">{4}</a></td>".format(teams[i].account_id, script_root, user_mode, teams[i].account_id, htmlentities(truncatedstring(teams[i].name, 35))) +
-                                "<td id=\"account{0}-solve\"><div class=\"progress\" style=\"height: 20px;\"><div id=\"score-progress-bar\" class=\"progress-bar bg-primary\" role=\"progressbar\" style=\"width: {1}%; -webkit-transition: width 2s; transition: width 2s;\" aria-valuenow=\"{1}\" aria-valuemin=\"0\" aria-valuemax=\"100\">{1}%</div></div></td>".format(teams[i].account_id, renderpercentwodigit(teams[i].solve, allcount)) +
-                                "<td id=\"account{0}-score\" class=\"text-right\">{1}</td>".format(teams[i].account_id, teams[i].score) +
-                                "<td id=\"account{0}-state\" class=\"text-center\">{1}</td>".format(teams[i].account_id, renderposition(teams[i].account_id)) +
-                                "</tr>";
-                            table.append(row);
-                        }
-                    }, update_table_delay);
-                }
-
             }
-        //});
+
+            var new_position = [];
+            for (var i = 0; i < teams.length; i++) {
+                var newteam = teams[i];
+                newteam["state"] = "stand";
+                new_position.push(newteam);
+            }
+            if(position[cat].length !== 0){
+                for (var i = 0; i < new_position.length; i++) {
+                    for (var j = 0; j < position[cat].length; j++) {
+                        if (new_position[i].account_id === position[cat][j].account_id){
+                            if (new_position[i].pos < position[cat][j].pos){
+                                new_position[i].state = "up";
+                            }else if(new_position[i].pos > position[cat][j].pos){
+                                new_position[i].state = "down";
+                            }else{
+                                new_position[i].state = "stand";
+                            }
+                            update_table = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            position[cat] = new_position;
+            
+            var element_id_prefix = "#tab-" + replaceSpacialChar(cat) + "-tbody-account";
+            for (var i = 0; i < teams.length; i++) {
+                var team_id = teams[i].account_id;
+                var team_name = htmlentities(truncatedstring(teams[i].name, 35));
+                var team_solve = renderpercentwodigit(teams[i].solve, catcount)
+                var team_score = teams[i].score;
+                var team_state = renderposition(team_id, cat);
+
+                $(element_id_prefix + team_id + "-team a").text(team_name);
+                $(element_id_prefix + team_id + "-solve div div").attr("style", "width: " + team_solve + "%; -webkit-transition: width 2s; transition: width 2s;");
+
+                $(element_id_prefix + team_id + "-solve div div").attr("aria-valuenow", team_solve);
+                var current_solve = $(element_id_prefix + team_id + "-solve div div").text();
+                current_solve = current_solve.substring(0, current_solve.length-1);
+                if (current_solve !== team_solve){
+                    $(element_id_prefix + team_id + "-solve div div").attr("class", "progress-bar bg-success progress-bar-striped progress-bar-animated");
+                    setTimeout(function(){
+                        $(element_id_prefix + team_id + "-solve div div").attr("class", "progress-bar bg-promary");
+                    }, 3000);
+                }
+                $(element_id_prefix + team_id + "-solve div div").text(team_solve + "%");
+                $(element_id_prefix + team_id + "-score").text(team_score);
+                $(element_id_prefix + team_id + "-state").empty();
+                $(element_id_prefix + team_id + "-state").append(team_state);
+            }
+            console.log(update_table);
+            if (update_table){
+                scorebard_data[cat] = teams;
+                setTimeout(function(){
+                    var table = $('#tab-' + replaceSpacialChar(cat) + ' tbody');
+                    console.log("table");
+                    console.log('#tab-' + replaceSpacialChar(cat) + ' tbody');
+                    table.empty();
+                    for (var i = 0; i < teams.length; i++) {
+                        var row = "<tr>\n" +
+                            "<th scope=\"row\" class=\"text-center\">{0}</th>".format(i + 1) +
+                            "<td id=\"{0}{1}-team\"><a href=\"{2}/{3}/{4}\">{5}</a></td>".format(element_id_prefix, teams[i].account_id, script_root, user_mode, teams[i].account_id, htmlentities(truncatedstring(teams[i].name, 35))) +
+                            "<td id=\"{0}{1}-solve\"><div class=\"progress\" style=\"height: 20px;\"><div id=\"score-progress-bar\" class=\"progress-bar bg-primary\" role=\"progressbar\" style=\"width: {2}%; -webkit-transition: width 2s; transition: width 2s;\" aria-valuenow=\"{2}\" aria-valuemin=\"0\" aria-valuemax=\"100\">{2}%</div></div></td>".format(element_id_prefix, teams[i].account_id, renderpercentwodigit(teams[i].solve, catcount)) +
+                            "<td id=\"{0}{1}-score\" class=\"text-right\">{2}</td>".format(element_id_prefix, teams[i].account_id, teams[i].score) +
+                            "<td id=\"{0}{1}-state\" class=\"text-center\">{2}</td>".format(element_id_prefix, teams[i].account_id, renderposition(teams[i].account_id, cat)) +
+                            "</tr>";
+                        table.append(row);
+                    }
+                }, update_table_delay);
+            }
+
+        }
     });
 }
 
@@ -328,16 +269,22 @@ function scoregraph () {
 }
 
 function update(){
-  updatescores();
   count = 0;
   // Get all available categories and loop to update score bar for each category
   $.get(script_root + '/api/v1/challenges/allcat', function (response) {
-        var teams = response.data;
-        for (var key in teams[0]) {
+        var allcat = response.data;
+
+        // update total
+        allcount = 0;
+        for (var key in allcat[0]) {
+            allcount += allcat[0][key];
+        }
+        updatescoresbycat("all", allcount);
+        
+        for (var key in allcat[0]) {
             // check if the property/key is defined in the object itself, not in parent
-            if (teams[0].hasOwnProperty(key)) {           
-                //console.log(key, teams[0][key]);
-                updatescoresbycat(key, teams[0][key]);
+            if (allcat[0].hasOwnProperty(key)) {           
+                updatescoresbycat(key, allcat[0][key]);
             }
         }
         
@@ -348,6 +295,7 @@ function update(){
 setInterval(update, 15000); // Update scores every 15 sec
 setTimeout(update, 1000); // Initial scores
 scoregraph();
+rendernavtab();
 
 window.onresize = function () {
     Plotly.Plots.resize(document.getElementById('score-graph'));

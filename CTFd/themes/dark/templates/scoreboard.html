@@ -47,56 +47,71 @@
 		{% if standings %}
 		<div id="scoreboard" class="row">
 			<div class="col-md-12">
-				<table class="table table-striped">
-					<thead>
-						<tr>
-							<td scope="col" class="text-center" width="10%"><b>Place</b></td>
-							<td scope="col" width="30%">
-								<b>
-									{% if get_config('user_mode') == 'teams' %}
-										Team
-									{% elif get_config('user_mode') == 'users' %}
-										User
-									{% endif %}
-								</b>
-							</td>
-							<td scope="col" width="48%"><b>Solve</b></td>
-							<td scope="col" class="text-right" width="7%"><b>Score</b></td>
-							<td scope="col" class="text-center" width="5%"><b></b></td>
-						</tr>
-					</thead>
-					<tbody>
-					{% for standing in standings %}
-						<tr>
-							<th scope="row" class="text-center">{{ loop.index }}</th>
-							<td id="account{{ standing.account_id }}-team">
-								<a href="{{ generate_account_url(standing.account_id) }}">
-									{{ standing.name | truncate(35) }}
-
-									{% if standing.oauth_id %}
-										{% if get_config('user_mode') == 'teams' %}
-										<a href="https://majorleaguecyber.org/t/{{ standing.name }}">
-											<span class="badge badge-primary">Official</span>
+				<ul class="nav nav-tabs" id="nav-tab" role="tablist">
+					<li class="nav-item">
+						<a class="nav-link active" id="nav-tab-all" data-toggle="tab" href="#tab-all" role="tab">Total score</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="#" tabindex="-1" >...</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="#" tabindex="-1" >...</a>
+					</li>
+				</ul>
+				<div class="tab-content" id="tab-content">
+					<div class="tab-pane fade show active" id="tab-all" role="tabpanel" aria-labelledby="home-tab">
+						<table class="table table-striped">
+							<thead>
+								<tr>
+									<td scope="col" class="text-center" width="10%"><b>Place</b></td>
+									<td scope="col" width="30%">
+										<b>
+											{% if get_config('user_mode') == 'teams' %}
+												Team
+											{% elif get_config('user_mode') == 'users' %}
+												User
+											{% endif %}
+										</b>
+									</td>
+									<td scope="col" width="48%"><b>Solve</b><small> (Percent of total challenge)</small></small></td>
+									<td scope="col" class="text-right" width="7%"><b>Score</b></td>
+									<td scope="col" class="text-center" width="5%"><b></b></td>
+								</tr>
+							</thead>
+							<tbody>
+							{% for standing in standings %}
+								<tr>
+									<th scope="row" class="text-center">{{ loop.index }}</th>
+									<td id="account{{ standing.account_id }}-team">
+										<a href="{{ generate_account_url(standing.account_id) }}">
+											{{ standing.name | truncate(35) }}
+		
+											{% if standing.oauth_id %}
+												{% if get_config('user_mode') == 'teams' %}
+												<a href="https://majorleaguecyber.org/t/{{ standing.name }}">
+													<span class="badge badge-primary">Official</span>
+												</a>
+												{% elif get_config('user_mode') == 'users' %}
+												<a href="https://majorleaguecyber.org/u/{{ standing.name }}">
+													<span class="badge badge-primary">Official</span>
+												</a>
+												{% endif %}
+											{% endif %}
 										</a>
-										{% elif get_config('user_mode') == 'users' %}
-										<a href="https://majorleaguecyber.org/u/{{ standing.name }}">
-											<span class="badge badge-primary">Official</span>
-										</a>
-										{% endif %}
-									{% endif %}
-								</a>
-							</td>
-							<td id="account{{ standing.account_id }}-solve">
-								<div class="progress" style="height: 20px;">
-									<div id="score-progress-bar" class="progress-bar bg-secondary progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%; -webkit-transition: width 2s; transition: width 2s;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-								</div>
-							</td>
-							<td id="account{{ standing.account_id }}-score" class="text-right">{{ standing.score }}</td>
-							<td id="account{{ standing.account_id }}-state" class="text-center"></td>
-						</tr>
-					{% endfor %}
-					</tbody>
-				</table>
+									</td>
+									<td id="account{{ standing.account_id }}-solve">
+										<div class="progress" style="height: 20px;">
+											<div id="score-progress-bar" class="progress-bar bg-secondary progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%; -webkit-transition: width 2s; transition: width 2s;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+										</div>
+									</td>
+									<td id="account{{ standing.account_id }}-score" class="text-right">{{ standing.score }}</td>
+									<td id="account{{ standing.account_id }}-state" class="text-center"></td>
+								</tr>
+							{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				</div>
 			</div>
 		</div>
 		{% endif %}

@@ -296,3 +296,28 @@ pre {
     border: none!important;
     opacity: 1!important;
 }
+
+#scoreboard .nav.nav-tabs .nav-item .nav-link {
+    color: #343a41;
+    background-color: #ffffff77;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+#scoreboard .nav.nav-tabs .nav-item .nav-link.active {
+    color: #fff;
+    background-color: #ffffff00;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+#scoreboard .table{
+    background-color: #ffffff00;
+}
+
+#scoreboard .tab-pane {
+    background-color: #ffffff00;
+    color: #fff;
+}
+
+.container {
+    max-width: 1500px;
+}
