@@ -42,6 +42,7 @@ class ScoreboardList(Resource):
 
             if mode == TEAMS_MODE:
                 members = []
+                sum_score = 0
                 for member in teams[i].members:
                     members.append({
                         'id': member.id,
@@ -49,8 +50,10 @@ class ScoreboardList(Resource):
                         'name': member.name,
                         'score': int(member.score)
                     })
+                    sum_score += int(member.score)
 
                 entry['members'] = members
+                entry['score'] = sum_score
 
             response.append(
                 entry
@@ -75,7 +78,13 @@ class ScoreboardDetail(Resource):
         team_ids = [team.account_id for team in standings]
 
         solves = Solves.query.filter(Solves.account_id.in_(team_ids))
-        awards = Awards.query.filter(Awards.account_id.in_(team_ids))
+        awards = db.session.query(
+                Awards.account_id.label('account_id'),
+                Awards.team_id.label('team_id'),
+                Awards.user_id.label('user_id'),
+                Awards.value.label('value'),
+                Awards.date.label('date'),
+        ).filter(Awards.account_id.in_(team_ids))
         hints_name_list =  db.session.query(
             db.func.concat("Hint ", Hints.id).label("hints_name")
         ).count()
@@ -93,17 +102,17 @@ class ScoreboardDetail(Resource):
                 .filter(Awards.value != 0) \
                 .filter(Awards.account_id.in_(team_ids))
 
-            awards_by_admin = db.session.query(
-                Awards.account_id.label('account_id'),
-                Awards.team_id.label('team_id'),
-                Awards.user_id.label('user_id'),
-                Awards.value.label('value'),
-                Awards.date.label('date'),
-            ) \
-                .filter(Awards.account_id.in_(team_ids)) \
-                .filter(Awards.value > 0)  
+        awards_by_admin = db.session.query(
+            Awards.account_id.label('account_id'),
+            Awards.team_id.label('team_id'),
+            Awards.user_id.label('user_id'),
+            Awards.value.label('value'),
+            Awards.date.label('date'),
+        ) \
+            .filter(Awards.account_id.in_(team_ids)) \
+            .filter(Awards.category != 'hints')  
 
-            awards = awards.union(awards_by_admin)
+        awards = awards.union(awards_by_admin)
 
         freeze = get_config('freeze')
 
