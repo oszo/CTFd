@@ -74,7 +74,7 @@ function updatescoresbycat (cat, catcount) {
         position[cat][i].state = "stand";
     }
 
-    $.get(script_root + '/api/v1/scoreboard/StatByCat/' + cat, function (response) {
+    $.get(script_root + (cat === 'all' ? '/api/v1/scoreboard' : '/api/v1/scoreboard/StatByCat/' + cat) , function (response) {
         var teams = response.data;
         var update_table = false;
         var isCatInScorebard_data = false;
