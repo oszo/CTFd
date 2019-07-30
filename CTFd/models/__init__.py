@@ -350,23 +350,20 @@ class Users(db.Model):
         award = db.session.query(
             Awards.user_id,
             award_score
-        ).filter_by(user_id=self.id)
+        ).filter(Awards.user_id == self.id) \
+        .filter(Awards.category != 'hints')
         if self.get_hints():
             hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
-            award = db.session.query(
-                Awards.user_id,
+            hints_award = db.session.query(
+                Awards.user_id.label('user_id'),
                 award_score
             ) \
                 .join(Hints, Awards.name == hints_name) \
                 .join(Solves, (Awards.user_id == Solves.user_id) & (Hints.challenge_id == Solves.challenge_id)) \
-                .filter(Awards.user_id == self.id)
-        awards_by_admin = db.session.query(
-            Awards.user_id,
-            award_score
-        ) \
-            .filter(Awards.user_id == self.id) \
-            .filter(Awards.category != 'hints')
-        award = award.union(awards_by_admin)
+                .filter(Awards.user_id == self.id) \
+                .filter(Awards.category == 'hints')
+
+            award = award.union(hints_award)
 
         if not admin:
             freeze = Configs.query.filter_by(key='freeze').first()

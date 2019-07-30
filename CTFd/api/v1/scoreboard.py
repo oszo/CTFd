@@ -42,7 +42,6 @@ class ScoreboardList(Resource):
 
             if mode == TEAMS_MODE:
                 members = []
-                sum_score = 0
                 for member in teams[i].members:
                     members.append({
                         'id': member.id,
@@ -50,10 +49,8 @@ class ScoreboardList(Resource):
                         'name': member.name,
                         'score': int(member.score)
                     })
-                    sum_score += int(member.score)
 
                 entry['members'] = members
-                entry['score'] = sum_score
 
             response.append(
                 entry
