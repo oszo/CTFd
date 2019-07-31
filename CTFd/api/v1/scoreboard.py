@@ -200,7 +200,7 @@ class ScoreboardByCategory(Resource):
         count = 0
         for r in response:
             r['pos'] = count + 1
-        
+            count += 1
 
         return {
             'success': True,
@@ -253,6 +253,7 @@ class ScoreboardByCategory(Resource):
         count = 0
         for r in response:
             r['pos'] = count + 1
+            count += 1
         
 
         return {
