@@ -165,37 +165,56 @@ class ScoreboardByCategory(Resource):
     def get(self, cat):
         response = []
 
-        #standings = get_standings(count=count)
         standings = get_standings()
 
-        team_ids = [team.account_id for team in standings]
+        chals = db.session.query(
+            Challenges.id,
+            Challenges.category,
+            Challenges.value
+        ).all()
 
-
-        solves = Solves.query.filter(Solves.account_id.in_(team_ids))
-
-        solves = solves.all()
-
-        for i, team in enumerate(team_ids):
+        for account in standings:
 
             entry = {
-                'account_id': standings[i].account_id,
-                'name': standings[i].name,
+                'account_id': account.account_id,
+                'name': account.name,
                 'score': 0,
                 'solve': 0
             }
-            
+
+            solves = db.session.query(
+                Solves.challenge_id.label('challenge_id')
+            ).filter(Solves.account_id==account.account_id).all()
             for solve in solves:
-                
-                if solve.account_id == team:
-                    challenges = Challenges.query.filter(
-                            and_(Challenges.state != 'hidden', Challenges.state != 'locked', Challenges.id == solve.challenge_id)
-                        ).first()
-                    
-                    if challenges.category == cat:
-                        entry['solve'] = entry['solve'] + 1
-                        entry['score'] = entry['score'] + challenges.value
+                for chal in chals:
+                    if (solve.challenge_id == chal.id and cat == chal.category):
+                        entry['solve'] += 1
+                        entry['score'] += int(chal.value)
+
+            hints_name_list =  db.session.query(
+                db.func.concat("Hint ", Hints.id).label("hints_name")
+            ).count()
+            if hints_name_list > 0:
+                hints_name = db.func.concat("Hint ", Hints.id).label("hints_name")
+                award_score = db.func.sum(Awards.value).label('award_score')
+                award_query = db.session.query(
+                    Solves.challenge_id.label('challenge_id'),
+                    award_score
+                ) \
+                    .join(Hints, Awards.name == hints_name) \
+                    .join(Solves, (Awards.user_id == Solves.user_id) & (Hints.challenge_id == Solves.challenge_id)) \
+                    .filter(Solves.account_id == account.account_id) \
+                    .group_by(Solves.challenge_id)
+                awards = award_query.all()
+                for award in awards:
+                    for chal in chals:
+                        if (award.challenge_id == chal.id and cat == chal.category):
+                            entry['score'] += int(award.award_score)
+
             response.append(entry)
             
+        db.session.close()
+ 
         response = sorted(response, key = lambda i: i['score'], reverse=True)
         count = 0
         for r in response:
