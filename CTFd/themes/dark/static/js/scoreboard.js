@@ -53,7 +53,7 @@ function rendernavtab() {
         encodeURIComponent(key),
         htmlentities(key)
       );
-      tabcontent += '<div class="tab-pane fade" id="tab-{0}" role="tabpanel" >						<table class="table table-striped"><thead><tr><td scope="col" class="text-center" width="10%"><b>Place</b></td><td scope="col" width="30%"><b>{1}</b></td><td scope="col" width="48%"><b>Solve</b><small> (Percent of total challenge)</small></small></td><td scope="col" class="text-right" width="7%"><b>Score</b></td><td scope="col" class="text-center" width="5%"><b></b></td></tr></thead><tbody></tbody></table></div>'.format(
+      tabcontent += '<div class="tab-pane fade" id="tab-{0}" role="tabpanel" >						<table class="table table-striped"><thead><tr><td scope="col" class="text-center" width="10%"><b>Place</b></td><td scope="col" width="30%"><b>{1}</b></td><td scope="col" width="48%"><b>Solve</b><small> (Percent of total challenge)</small></small></td><td scope="col" class="text-right" width="7%"><b>Score</b></td><td scope="col" class="text-center" width="5%"><b></b></td></tr></thead><tbody><tr><th scope="row" class="text-center">&nbsp;</th><td><a>&nbsp;</a></td><td><div class="progress" style="height: 20px;"><div class="progress-bar bg-secondary progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%; -webkit-transition: width 2s; transition: width 2s;"></div></div></td><td>&nbsp;</td><td></td></tr><tr><th scope="row" class="text-center">&nbsp;</th><td><a>&nbsp;</a></td><td><div class="progress" style="height: 20px;"><div class="progress-bar bg-secondary progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%; -webkit-transition: width 2s; transition: width 2s;"></div></div></td><td>&nbsp;</td><td></td></tr><tr><th scope="row" class="text-center">&nbsp;</th><td><a>&nbsp;</a></td><td><div class="progress" style="height: 20px;"><div class="progress-bar bg-secondary progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%; -webkit-transition: width 2s; transition: width 2s;"></div></div></td><td>&nbsp;</td><td></td></tr></tbody></table></div>'.format(
         key_id,
         user_mode === "teams" ? "Team" : "User"
       );
@@ -62,7 +62,7 @@ function rendernavtab() {
     $("#nav-tab").append(navtab);
     $("#tab-content").append(tabcontent);
 
-    var navscript = "$('#nav-tab a').on('click', function (e) { updateSubCat(decodeURIComponent($(e.target).data('catkey'))); });"
+    var navscript = "$('#nav-tab a').on('click', function (e) { current_cat = $(e.target).data('catkey'); clearInterval(updateCatInterval); updateSubCat(decodeURIComponent(current_cat)); updateCatInterval = setInterval(() => updateSubCat(decodeURIComponent(current_cat)), 30000); });"
     $("#nav-tab").append("<script>" + navscript + "</script>");
 
     for (var key in challenge_cats[0]) {
@@ -344,15 +344,19 @@ function updateAllCat() {
 }
 
 function updateSubCat(cat) {
-  // Get available and update score bar for spacific cat
-  $.get(script_root + "/api/v1/challenges/allcat", function(response) {
-    var allcat = response.data;
-    for (var key in allcat[0]) {
-      if (cat === key) {
-        updatescoresbycat(key, allcat[0][key]);
+  if (cat === "all") {
+    updateAllCat();
+  } else {
+    // Get available and update score bar for spacific cat
+    $.get(script_root + "/api/v1/challenges/allcat", function(response) {
+      var allcat = response.data;
+      for (var key in allcat[0]) {
+        if (cat === key) {
+          updatescoresbycat(key, allcat[0][key]);
+        }
       }
-    }
-  });
+    });
+  }
 }
 
 function updateAllSubCat(cat, catcount) {
@@ -361,7 +365,8 @@ function updateAllSubCat(cat, catcount) {
 }
 
 setInterval(scoregraph, 30000); // Update scores graph every 30 sec
-setInterval(updateAllCat, 30000); // Update scores every 30 sec
+var updateCatInterval = setInterval(updateAllCat, 30000); // Update scores every 30 sec
+var current_cat;
 setTimeout(updateAllCat, 1000); // Initial scores
 scoregraph();
 rendernavtab();
