@@ -44,13 +44,14 @@ function rendernavtab() {
   $.get(script_root + "/api/v1/challenges/allcat", function(response) {
     var challenge_cats = response.data;
     var navtab =
-      '<li class="nav-item"><a class="nav-link active" id="nav-tab-all" data-toggle="tab" href="#tab-all" role="tab">Total score</a></li>';
+      '<li class="nav-item"><a class="nav-link active" id="nav-tab-all" data-toggle="tab" data-catkey="all" href="#tab-all" role="tab">Total score</a></li>';
     var tabcontent = "";
     for (var key in challenge_cats[0]) {
       var key_id = replaceSpacialChar(key);
-      navtab += '<li class="nav-item"><a class="nav-link" id="nav-tab-{0}" data-toggle="tab" href="#tab-{0}" role="tab">{1}</a></li>'.format(
+      navtab += '<li class="nav-item"><a class="nav-link" id="nav-tab-{0}" data-toggle="tab" data-catkey="{1}" href="#tab-{0}" role="tab">{2}</a></li>'.format(
         key_id,
-        key
+        encodeURIComponent(key),
+        htmlentities(key)
       );
       tabcontent += '<div class="tab-pane fade" id="tab-{0}" role="tabpanel" >						<table class="table table-striped"><thead><tr><td scope="col" class="text-center" width="10%"><b>Place</b></td><td scope="col" width="30%"><b>{1}</b></td><td scope="col" width="48%"><b>Solve</b><small> (Percent of total challenge)</small></small></td><td scope="col" class="text-right" width="7%"><b>Score</b></td><td scope="col" class="text-center" width="5%"><b></b></td></tr></thead><tbody></tbody></table></div>'.format(
         key_id,
@@ -60,9 +61,14 @@ function rendernavtab() {
     $("#nav-tab").empty();
     $("#nav-tab").append(navtab);
     $("#tab-content").append(tabcontent);
-  });
 
-  scoregraph();
+    var navscript = "$('#nav-tab a').on('click', function (e) { updateSubCat(decodeURIComponent($(e.target).data('catkey'))); });"
+    $("#nav-tab").append("<script>" + navscript + "</script>");
+
+    for (var key in challenge_cats[0]) {
+      updateAllSubCat(key, challenge_cats[0][key]);
+    }     
+  });
 }
 
 var firstime_updatescores = true;
@@ -325,31 +331,38 @@ function scoregraph() {
   });
 }
 
-function update() {
-  count = 0;
-  // Get all available categories and loop to update score bar for each category
+function updateAllCat() {
+  // Get available and update score bar for allcat
   $.get(script_root + "/api/v1/challenges/allcat", function(response) {
     var allcat = response.data;
-
-    // update total
     allcount = 0;
     for (var key in allcat[0]) {
       allcount += allcat[0][key];
     }
     updatescoresbycat("all", allcount);
+  });
+}
 
+function updateSubCat(cat) {
+  // Get available and update score bar for spacific cat
+  $.get(script_root + "/api/v1/challenges/allcat", function(response) {
+    var allcat = response.data;
     for (var key in allcat[0]) {
-      // check if the property/key is defined in the object itself, not in parent
-      if (allcat[0].hasOwnProperty(key)) {
+      if (cat === key) {
         updatescoresbycat(key, allcat[0][key]);
       }
     }
   });
-
-  scoregraph();
 }
-setInterval(update, 15000); // Update scores every 15 sec
-setTimeout(update, 1000); // Initial scores
+
+function updateAllSubCat(cat, catcount) {
+  // Get all available and update score bar
+  setTimeout(() => updatescoresbycat(cat, catcount), 1000);
+}
+
+setInterval(scoregraph, 30000); // Update scores graph every 30 sec
+setInterval(updateAllCat, 30000); // Update scores every 30 sec
+setTimeout(updateAllCat, 1000); // Initial scores
 scoregraph();
 rendernavtab();
 
