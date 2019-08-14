@@ -185,6 +185,15 @@ class ScoreboardByCategory(Resource):
             solves = db.session.query(
                 Solves.challenge_id.label('challenge_id')
             ).filter(Solves.account_id==account.account_id).all()
+
+            freeze = get_config('freeze')
+
+            if freeze:
+                solves = db.session.query(
+                    Solves.challenge_id.label('challenge_id')
+                ).filter(Solves.account_id==account.account_id) \
+                .filter(Solves.date < unix_time_to_utc(freeze)).all()
+
             for solve in solves:
                 for chal in chals:
                     if (solve.challenge_id == chal.id and cat == chal.category):
