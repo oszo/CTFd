@@ -40,6 +40,7 @@ from CTFd.utils.dates import ctf_ended, ctf_paused, ctftime
 from CTFd.utils.logging import log
 from CTFd.utils.security.signing import serialize
 from sqlalchemy.sql import and_
+import datetime
 
 challenges_namespace = Namespace('challenges',
                                  description="Endpoint to retrieve Challenges")
