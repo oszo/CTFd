@@ -68,8 +68,6 @@ def get_standings(count=None, admin=False):
         .filter(Awards.category != 'hints') \
         .group_by(Awards.account_id)
 
-    awards = awards.union(awards_by_admin)
-
     """
     Filter out solves and awards that are before a specific time point.
     """
@@ -77,6 +75,9 @@ def get_standings(count=None, admin=False):
     if not admin and freeze:
         scores = scores.filter(Solves.date < unix_time_to_utc(freeze))
         awards = awards.filter(Awards.date < unix_time_to_utc(freeze))
+        awards_by_admin = awards_by_admin.filter(Awards.date < unix_time_to_utc(freeze))
+
+    awards = awards.union(awards_by_admin)
 
     """
     Combine awards and solves with a union. They should have the same amount of columns
